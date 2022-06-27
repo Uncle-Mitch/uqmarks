@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>UQ final calculator</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+    <link rel="stylesheet" href="{{url_for('static', filename='css/index_style.css')}}">
+    <script type='text/javascript' src="{{url_for('static', filename='js/app.js')}}"></script>
+  </head>
+
+  <section class="hero is-primary">
+    <div class="hero-body">
+      <p class="title">
+        UQ Final Exam Calculator
+      </p>
+      <p class="subtitle">
+        2022
+      </p>
+    </div>
+  </section>
+
+  <body>
+  <section class="section">
+    <div class="container">
+      <div class="content-is-large">
+        <h1 class="title">Semester 1 2022 </h1>
+        <br>
+        <div class="container">
+          <h2 class="subtitle">Enter your course code:</h2>
+
+          <form method='post' action="/redirect" id="courseform">
+            <div class="field has-addons has-addons-centered">
+              <p class="control">
+                <input  name='CourseCode' class="input" type="text" placeholder="Course Code" autocomplete="off" spellcheck="false" value={{code}}>
+              </p>
+              <p class="control">
+                <button id="submitBtn" class="button is-primary" type="x">
+                  Go
+                </button>
+              </p>
+            </div>
+          </form>
+          <br>
+          <h2 class="subtitle">Invalid course code</h2>
+          
+        </div>
+      </div>
+     
+    </div>
+    <script src="app.js"></script>
+  </section>
+
+  </body>
+</html>
