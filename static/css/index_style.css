@@ -1,5 +1,160 @@
-div {text-align: center;}
+@font-face {
+  font-family: titleFont;
+  src: url("../fonts/Sato-Medium.ttf");
+}
+
+@font-face {
+  font-family: contentFont;
+  src: url("../fonts/RedHatDisplay-Regular.ttf");
+}
+
+
+.purp-bg {
+  background-color: #48206C;
+}
+
+.white-bg {
+  background-color: #F4EAFF;
+  color: #F4EAFF;
+}
+
+
+.navbar-item:hover {
+  background-color: #B461FF !important;
+}
+
+.allow_hover:hover {
+  background-color: #B461FF !important;
+  color: #F4EAFF !important;
+}
+
+.btn-purp-bg {
+  background-color: #B461FF !important;
+  color: rgb(255,255,255) !important;
+  border: 0px !important;
+  width: 100% !important;
+}
+
+#tblresults{
+  margin-top: 50px;
+}
+
+.title {
+  font-size: 56px !important;
+  font-family: titleFont !important;
+  letter-spacing: 0.04em;
+}
+
+.content-font {
+  font-family: contentFont;
+}
+
+.title-font {
+  font-family: titleFont;
+}
+
+body {
+  min-height: 100vh;
+}
+
+.body-align {
+  padding-left: 20%;
+  padding-right: 20%;
+}
+
+.columns {
+  padding-left: 9%;
+  padding-right: 9%;
+}
+
+.hero{
+  color: rgb(255,255,255);
+  padding-top: 50px;
+  margin-bottom: 0% !important;
+}
+
+.text-light-purp{
+  color: #D9B3FF;
+}
+
+.is-danger {
+  border-color: #FF636B;
+  border-width: 5px;
+}
+
+
+@media only screen and (max-width: 768px) {
+  table{
+    width: 90% !important;
+  }
+
+  .body-align {
+    padding-left: 0% !important;
+    padding-right: 0% !important;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .columns {
+    padding-left: 5%;
+    padding-right: 5%;
+  }
+}
+
+#submitBtn{
+  background-color: #48206C;
+  color: rgb(255,255,255);
+}
+
+
+#section-main {
+  min-height: 100vh;
+  padding-top: 0% !important;
+}
+
+.justify-align{
+  min-width: 70%;
+}
+
+div {
+  text-align: center;
+}
+
 .table {
   margin-left: auto;
   margin-right: auto;
+  border-radius: 6px;
+  background-color:#F4EAFF;
+  text-align: center;
+}
+
+.score-input{
+  background-color: #F4EAFF;
+  border-style: solid;
+  border-radius: 6px;
+  border-color: #000;
+}
+
+th {
+  text-align: center !important;
+}
+
+#row-1 {
+  background-color: #68FF77;
+}
+
+.footer {
+  position: relative;
+  width:100%;
+  height:60px;
+  font-size: 12px;
+  margin-top: 0px;
+  background-color: #48206C;
+  padding: 5px;
+}
+
+.footer-p, .white-text{
+  color: rgb(255,255,255) !important;
+  font-family: contentFont;
+  letter-spacing: 0.05em;
 }
