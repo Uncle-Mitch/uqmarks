@@ -3,72 +3,193 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>UQ final calculator</title>
+    <title>UQ Grade Calculator</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
     <link rel="stylesheet" href="{{url_for('static', filename='css/index_style.css')}}">
-    <script type='text/javascript' src="{{url_for('static', filename='js/app.js')}}"></script>
+    <link rel="shortcut icon" href="{{ url_for('static', filename='images/favicon.ico') }}">
+    <link rel="preload" href="{{url_for('static', filename='fonts//RedHatDisplay-Regular.ttf')}}" as="font">
+    <link rel="preload" href="{{url_for('static', filename='fonts///Sato-Medium.ttf')}}" as="font">
+    <meta name="robots" content="noindex">
+        <meta property='og:title'  content='UQ Grade Calculator'>
+    <meta property='og:url'  content='https://www.uqmarks.com/'>
+    <meta property='og:description'  content='SEMESTER 2 2022 - CALCULATE YOUR REQUIRED GRADES. Need to get a certain GPA? Easily calculate the mark required to get your desired grade at UQ with UQMARKS!'>
+    <meta property="og:image" content="https://www.uqmarks.com/static/images/share.png" />
   </head>
+<nav class="navbar purp-bg" role="navigation" aria-label="main navigation">
+    <div class="navbar-brand">
+      <a class="navbar-item" href="/">
+        <img src="{{url_for('static', filename='images/uqmarks_logo.png')}}" alt="site logo" style="max-height: 50px" class="py-3 px-3">
+      </a>
 
-  <section class="hero is-primary">
+      <a class="navbar-burger" id='burger'>
+        <span class="white-bg"></span>
+        <span class="white-bg"></span>
+        <span class="white-bg"></span>
+      </a>
+    </div>
+
+    <div id="nav-links" class="navbar-menu purp-bg">
+      <div class="navbar-start">
+        <a class="navbar-item white-text" href="/">
+          Grade Calculator
+        </a>
+
+        <a class="navbar-item white-text" href="/quiz">
+          Weekly Quiz Calculator
+        </a>
+
+      </div>
+
+      </div>
+    </div>
+  </nav>
+  <body>
+
+<section class="hero purp-bg body-align">
     <div class="hero-body">
-      <p class="title">
-        UQ Final Exam Calculator
-      </p>
-      <p class="subtitle">
-        2022
-      </p>
+      <h1 class="title text-light-purp is-size-1">
+        UQMARKS Grade Calculator
+      </h1>
     </div>
   </section>
-
-  <body>
-  <section class="section">
+  <section class="section purp-bg body-align" id='section-main'>
     <div class="container">
       <div class="content-is-large">
-        <h1 class="title">Semester 1 2022 </h1>
-        <br>
         <div class="container">
-          <h2 class="subtitle">Enter your course code:</h2>
-          <form method='post' action="/redirect" id="courseform">
-            <div class="field has-addons has-addons-centered">
-              <p class="control">
-                <input  name='CourseCode' class="input" type="text" placeholder="Course Code" autocomplete="off" spellcheck="false" value={{code}}>
-              </p>
-              <p class="control">
-                <button id="submitBtn" class="button is-primary" type="submit">
-                  Go
-                </button>
-              </p>
+          <form method='post' action="/redirect" id="courseform" class="justify-align">
+            <div class="columns is-centered is-3 is-multiline">
+              <div class="column">
+                <p class="control">
+                  <div class="select is-medium is-fullwidth">
+                    <select name='Semester' class='content-font'>
+                      <option value='2022S2'>Semester 2 2022</option>
+                      <option value='2022S1'>Semester 1 2022</option>
+                      <option value='2021S2'>Semester 2 2021</option>
+                    </select>
+                  </div>
+                </p>
+              </div>
+              <div class="column">
+                <p class="control ccode">
+                  <input name='CourseCode' value={{code}} class="input is-medium content-font" type="text" placeholder="Course Code" autocomplete="off" spellcheck="false" autofocus>
+                </p>
+              </div>
+              <div class="column is-one-fifth">
+                <p class="control">
+                    <button id="submitBtn" class="button btn-purp-bg is-medium content-font" type="submit">
+                    Go
+                    </button>
+                </p>
+              </div>
             </div>
           </form>
 
         </div>
+      </div>
+        <div class="container" id="tblresults">
+          <table class="table" style="width: 82%">
+            <colgroup>
+              <col span="1" style="width: 50%;">
+              <col span="1" style="width: 25%;">
+              <col span="1" style="width: 25%;">
+            </colgroup>
+            <thead>
+              <th>Assessment</th>
+              <th>Weight</th>
+              <th>Your Score (%)</th>
+            </thead>
+            {% for name, weight in assessment_list %}
+            <tr>
+                <td>{{ name }}</td>
+                <td>{{ weight }}</td>
+                <td><input onchange="calculate()" data-weight={{weight}} name="score" class="input score-input" type="text" placeholder="" style="width: 100%;"></td>
+            </tr>
+            {% endfor %}
+          </table>
+        </div>
+
+        <div class="results-container">
         <br>
+          <h2 class="subtitle is-size-2 has-text-weight-semibold text-light-purp">Results</h2>
+          <p class="subtitle text-light-purp" id="lbltotalScore">Total Score: 0.00%</p>
+        </div>
         <br>
-        <table class="table" style="width: 40%">
-          <colgroup>
-            <col span="1" style="width: 50%;">
-            <col span="1" style="width: 25%;">
-            <col span="1" style="width: 25%;">
-          </colgroup>
-          <thead>
-            <th>Assessment</th>
-            <th>Weight</th>
-            <th>Your Score</th>
-          </thead>
-          {% for name, weight in assessment_list %}
-          <tr>
-              <td>{{ name }}</td>
-              <td>{{ weight }}</td>
-              <td><input class="input" type="text" placeholder="" style="width: 50%;"></td>
-          </tr>
-          {% endfor %}
-        </table>
+        <div class="container">
+          <table class="table" style="width: 82%">
+            <colgroup>
+              <col span="1" style="width: 25%;">
+              <col span="1" style="width: 25%;">
+              <col span="1" style="width: 25%;">
+              <col span="1" style="width: 25%;">
+            </colgroup>
+            <thead>
+              <th>Grade</th>
+              <th>Cutoff %</th>
+              <th>Required %</th>
+              <th>Required Score</th>
+            </thead>
+            <tr id="row-1">
+              <td>1</td>
+              <td>0</td>
+              <td>0</td>
+              <td>0</td>
+            </tr>
+            <tr id="row-2">
+              <td>2</td>
+              <td id="2-cutoff">30</td>
+              <td id='2-required'>30</td>
+              <td id="2-score">30/100</td>
+            </tr>
+            <tr id="row-3">
+              <td>3</td>
+              <td id="3-cutoff">45</td>
+              <td id='3-required'>45</td>
+              <td id="3-score">45/100</td>
+            </tr>
+            <tr id="row-4">
+              <td>4</td>
+              <td id="4-cutoff">50</td>
+              <td id='4-required'>50</td>
+              <td id="4-score">50/100</td>
+            </tr>
+            <tr id="row-5">
+              <td>5</td>
+              <td id="5-cutoff">65</td>
+              <td id='5-required'>65</td>
+              <td id="5-score">65/100</td>
+            </tr>
+            <tr id="row-6">
+              <td>6</td>
+              <td id="6-cutoff">75</td>
+              <td id='6-required'>75</td>
+              <td id="6-score">75/100</td>
+            </tr>
+            <tr id="row-7">
+              <td>7</td>
+              <td id="7-cutoff">85</td>
+              <td id='7-required'>85</td>
+              <td id="7-score">85/100</td>
+            </tr>
+
+          </table>
+        </div>
 
       </div>
-     
+
     </div>
   </section>
-
-  <script src="/app.js"></script>
   </body>
+  <script type='text/javascript' src="{{url_for('static', filename='js/course.js')}}"></script>
+  <script type='text/javascript' src="{{url_for('static', filename='js/navbar.js')}}"></script>
+  <footer class="footer">
+    <div class="content has-text-centered">
+      <p class="footer-p">
+        <strong class="footer-p">UQ Grade Calculator</strong> by NotMitch.
+        <br>
+        <a href="https://forms.gle/KE1r15WmLNaHBtnp6"><strong class="footer-p">Contact form</strong></a>
+        <br>
+        Inspired by <a class="footer-p" href="https://uqfinal.com/">UQfinal</a>
+      </p>
+    </div>
+  </footer>
 </html>
