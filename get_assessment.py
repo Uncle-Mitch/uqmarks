@@ -75,6 +75,17 @@ def get_assessments(code:str, semester:str, year:str):
     section_code = course_profile.rpartition('/')[2]
     table = get_table(section_code)
 
+    file_path = os.path.join('courses', f'{year}s{semester}')
+    data = {}
+    data['code'] = f"{code}"
+    data['semester'] = f"{semester}"
+    data['year'] = f"{year}"
+    data['assignments'] = table
+
+    with open (os.path.join(filepath, f"{code}.json"), "w", encoding='utf-8) as f:
+        json.dump(data, f, ensure_ascii=False, indent=4)
+    
+
     # send to discord
     headers = requests.utils.default_headers()
     headers.update(
