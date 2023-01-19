@@ -74,16 +74,21 @@ def get_assessments(code:str, semester:str, year:str):
     course_profile = get_page(code, semester, year)
     section_code = course_profile.rpartition('/')[2]
     table = get_table(section_code)
+    
+    folder = os.path.join('course_data', f'{year}s{semester}')
+    if not os.path.exists(folder):
+        os.mkdir(folder)
 
-    file_path = os.path.join('courses', f'{year}s{semester}')
+    file_path = os.path.join(folder, f"{code}.json")
     data = {}
     data['code'] = f"{code}"
     data['semester'] = f"{semester}"
     data['year'] = f"{year}"
     data['assignments'] = table
 
-    with open (os.path.join(filepath, f"{code}.json"), "w", encoding='utf-8) as f:
+    with open (file_path, "w", encoding='utf-8') as f:
         json.dump(data, f, ensure_ascii=False, indent=4)
+    
     
 
     # send to discord
@@ -106,7 +111,7 @@ def get_assessments(code:str, semester:str, year:str):
         }
     ]
 
-    result = requests.post(os.environ['LOG_LINK'], json = data, headers=headers)
+    #result = requests.post(os.environ['LOG_LINK'], json = data, headers=headers)
     return table
 
 
