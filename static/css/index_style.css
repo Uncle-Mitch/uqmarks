@@ -77,6 +77,10 @@ body {
   color: #D9B3FF;
 }
 
+.text-white{
+  color: #fff;
+}
+
 .is-danger {
   border-color: #FF636B;
   border-width: 5px;
