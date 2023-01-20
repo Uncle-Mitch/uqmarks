@@ -7,12 +7,13 @@ from flask_sqlalchemy import SQLAlchemy
 from os import path
 from ast import literal_eval as make_tuple
 import os
+import time
 
 
 db = SQLAlchemy()
 DB_NAME = "course.sqlite"
 app = Flask(__name__)
-#app.config['SECRET_KEY'] = os.environ['SECRET_KEY']
+app.config['SECRET_KEY'] = os.environ['SECRET_KEY']
 app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{DB_NAME}'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
@@ -21,8 +22,7 @@ class Course(db.Model):
     code = db.Column(db.String(8), primary_key=True)
     semester = db.Column(db.Integer, primary_key=True)
     year = db.Column(db.Integer, primary_key=True)
-    asmts = db.Column(db.String(400))
-
+    asmts = db.Column(db.String(4000))
 db.init_app(app)
 
 
@@ -30,12 +30,15 @@ def get_course(code:str, semester:str, year:str):
     code=code.upper()
     sem = int(semester)
     yr = int(year)
-    file_path = os.path.join('course_data', f'{year}s{semester}', f"{code}.json")
-    if os.path.isfile(file_path):
-        with open(file_path, "r", encoding='utf-8') as f:
-            data = json.load(f)
-            return data["assignments"]
+    found_course = Course.query.filter_by(code=code, year=yr, semester=sem).first()
+    if found_course:
+        return make_tuple(found_course.asmts)
+
     weightings = get_assessments(code, semester, year)
+    db_asmts = str(weightings)
+    new_course = Course(code=code, semester=sem, year=yr, asmts=db_asmts)
+    db.session.add(new_course)
+    db.session.commit()
     return weightings
 
 def create_database(app):
@@ -84,7 +87,7 @@ def quiz():
             "title" : "User opened the quiz page",
         }
     ]
-    #result = requests.post(os.environ['LOG_LINK'], json = data, headers=headers)
+    result = requests.post(os.environ['LOG_LINK'], json = data, headers=headers)
     return render_template('quiz.html')
 
 @app.route('/<path:sem>/<path:text>', methods=['GET','POST'])
@@ -114,7 +117,8 @@ def all_routes(sem, text):
                     "title" : text,
                 }
             ]
-           # result = requests.post(os.environ['LOG_LINK'], json = data, headers=headers)
+            
+            result = requests.post(os.environ['LOG_LINK'], json = data, headers=headers)
             return render_template('course_code.html', assessment_list=weightings, code=text)
     else:
         return render_template('invalid.html', code=text)
