@@ -1,2 +1,5 @@
-# fried-rice
-read me!
+# UQMARKS
+
+Developed with the flask framework (python) and SQLite
+
+
