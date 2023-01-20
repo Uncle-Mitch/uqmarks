@@ -7,6 +7,7 @@ from flask_sqlalchemy import SQLAlchemy
 from os import path
 from ast import literal_eval as make_tuple
 import os
+import time
 
 
 db = SQLAlchemy()
@@ -21,8 +22,7 @@ class Course(db.Model):
     code = db.Column(db.String(8), primary_key=True)
     semester = db.Column(db.Integer, primary_key=True)
     year = db.Column(db.Integer, primary_key=True)
-    asmts = db.Column(db.String(400))
-
+    asmts = db.Column(db.String(4000))
 db.init_app(app)
 
 
@@ -33,13 +33,13 @@ def get_course(code:str, semester:str, year:str):
     found_course = Course.query.filter_by(code=code, year=yr, semester=sem).first()
     if found_course:
         return make_tuple(found_course.asmts)
-    else:
-        weightings = get_assessments(code, semester, year)
-        db_asmts = str(weightings)
-        new_course = Course(code=code, semester=sem, year=yr, asmts=db_asmts)
-        db.session.add(new_course)
-        db.session.commit()
-        return weightings
+
+    weightings = get_assessments(code, semester, year)
+    db_asmts = str(weightings)
+    new_course = Course(code=code, semester=sem, year=yr, asmts=db_asmts)
+    db.session.add(new_course)
+    db.session.commit()
+    return weightings
 
 def create_database(app):
     if not path.exists(DB_NAME):
@@ -91,7 +91,7 @@ def quiz():
     return render_template('quiz.html')
 
 @app.route('/<path:sem>/<path:text>', methods=['GET','POST'])
-def all_routes(sem, text):
+def all_routes(sem, text):  
     if len(text) == 8 and text[:4].isalpha() and text[4:].isnumeric():
         year, _, semester = sem.partition('S')
         try:
@@ -117,6 +117,7 @@ def all_routes(sem, text):
                     "title" : text,
                 }
             ]
+            
             result = requests.post(os.environ['LOG_LINK'], json = data, headers=headers)
             return render_template('course_code.html', assessment_list=weightings, code=text)
     else:
