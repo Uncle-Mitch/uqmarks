@@ -127,3 +127,10 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+#project secrets
+secret.py
+course.sqlite3
+course.sqlite
+
+course_data/

@@ -4,7 +4,7 @@ function calculate(){
   let total_score = 0.00
   let undecided = 0.00
   for (let i = 0; i < scores.length; i++) {
-    let weight = parseInt((scores[i].dataset.weight))
+    let weight = parseFloat((scores[i].dataset.weight))
     if (scores[i].disabled === false) {
     if (! isNaN(parseFloat(scores[i].value))) {
       let score = parseFloat(scores[i].value)
