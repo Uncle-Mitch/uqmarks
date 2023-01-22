@@ -130,3 +130,6 @@ dmypy.json
 
 #project secrets
 secret.py
+course.sqlite3
+
+course_data/
