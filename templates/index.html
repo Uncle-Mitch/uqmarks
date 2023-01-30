@@ -67,9 +67,9 @@
                 <p class="control">
                   <div class="select is-medium is-fullwidth content-font">
                     <select name='Semester'>
-                      <option value='2022S3'>Summer Semester 2022-23</option>
-                      <option value='2022S2'>Semester 2 2022</option>
-                      <option value='2022S1'>Semester 1 2022</option>
+                      <option value='2022S3' {% if sem == "2022S3" %} selected {% endif %}>Summer Semester 2022-23</option>
+                      <option value='2022S2' {% if sem == "2022S2" %} selected {% endif %}>Semester 2 2022</option>
+                      <option value='2022S1' {% if sem == "2022S1" %} selected {% endif %}>Semester 1 2022</option>
                     </select>
                   </div>
                 </p>
