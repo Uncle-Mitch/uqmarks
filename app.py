@@ -119,7 +119,7 @@ def all_routes(sem, text):
             ]
             
             result = requests.post(os.environ['LOG_LINK'], json = data, headers=headers)
-            return render_template('course_code.html', assessment_list=weightings, code=text)
+            return render_template('course_code.html', assessment_list=weightings, code=text, sem=sem)
     else:
         return render_template('invalid.html', code=text)
 
