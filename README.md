@@ -1,4 +1,4 @@
-# UQMARKS
+![UQMARKS logo image](./static/images/share_small.png)
 
 A grade calculator specifically designed for UQ. 
 Currently hosted on https://www.uqmarks.com/
