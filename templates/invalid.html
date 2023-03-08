@@ -19,6 +19,14 @@
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5647299176749275"
      crossorigin="anonymous"></script>
      <meta name="robots" content="noindex">
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-BW68VRSJ96"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-BW68VRSJ96');
+    </script>
   </head>
 
   <nav class="navbar purp-bg" role="navigation" aria-label="main navigation">
@@ -55,7 +63,7 @@
       <h1 class="title text-light-purp is-size-1">
         UQMARKS Grade Calculator
       </h1>
-      <h2 class="text-white is-size-4">Summer Semester 2022-23 Now Available </h2>
+      <h2 class="text-white is-size-4">Semester 1 2023 Now Available </h2>
     </div>
   </section>
   <section class="section purp-bg body-align" id='section-main'>
@@ -68,6 +76,7 @@
                 <p class="control">
                   <div class="select is-medium is-fullwidth">
                     <select class="content-font" name='Semester'>
+                      <option value='2023S1' {% if sem == "2023S1" %} selected {% endif %}>Semester 1 2023</option>
                       <option value='2022S3' {% if sem == "2022S3" %} selected {% endif %}>Summer Semester 2022-23</option>
                       <option value='2022S2' {% if sem == "2022S2" %} selected {% endif %}>Semester 2 2022</option>
                       <option value='2022S1' {% if sem == "2022S1" %} selected {% endif %}>Semester 1 2022</option>
@@ -98,10 +107,8 @@
 <footer class="footer">
     <div class="content has-text-centered">
       <p class="footer-p">
-        <p class="footer-p">
-          <strong class="footer-p">UQ Grade Calculator</strong> by <a class="footer-p" href="https://github.com/gricey432/unifinal">UncleMitch</a>.
-          Inspired by <a class="footer-p" href="https://uqfinal.com/">UQfinal</a>
-        </p>
+        <strong class="footer-p">UQ Grade Calculator</strong> by <a class="footer-p" href="https://github.com/Uncle-Mitch/uqmarks">UncleMitch</a>.
+        Inspired by <a class="footer-p" href="https://uqfinal.com/">UQfinal</a>
       </p>
     </div>
   </footer>
