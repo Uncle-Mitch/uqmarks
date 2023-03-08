@@ -94,7 +94,7 @@ def get_assessments(code:str, semester:str, year:str):
         }
     ]
 
-    result = requests.post(os.environ['LOG_LINK'], json = data, headers=headers)
+    #result = requests.post(os.environ['LOG_LINK'], json = data, headers=headers)
     return table
 
 

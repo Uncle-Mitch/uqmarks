@@ -13,7 +13,7 @@ import time
 db = SQLAlchemy()
 DB_NAME = "course.sqlite"
 app = Flask(__name__)
-app.config['SECRET_KEY'] = os.environ['SECRET_KEY']
+#app.config['SECRET_KEY'] = os.environ['SECRET_KEY']
 app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{DB_NAME}'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
@@ -87,7 +87,7 @@ def quiz():
             "title" : "User opened the quiz page",
         }
     ]
-    result = requests.post(os.environ['LOG_LINK'], json = data, headers=headers)
+    #result = requests.post(os.environ['LOG_LINK'], json = data, headers=headers)
     return render_template('quiz.html')
 
 @app.route('/<path:sem>/<path:text>', methods=['GET','POST'])
@@ -118,7 +118,7 @@ def all_routes(sem, text):
                 }
             ]
             
-            result = requests.post(os.environ['LOG_LINK'], json = data, headers=headers)
+            #result = requests.post(os.environ['LOG_LINK'], json = data, headers=headers)
             return render_template('course_code.html', assessment_list=weightings, code=text)
     else:
         return render_template('invalid.html', code=text)
