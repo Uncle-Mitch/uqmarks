@@ -7,6 +7,11 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
     <link rel="stylesheet" href="{{url_for('static', filename='css/index_style.css')}}">
     <link rel="shortcut icon" href="{{ url_for('static', filename='images/favicon.ico') }}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', filename='images/apple-touch-icon.png') }}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='images/favicon-32x32.png') }}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ url_for('static', filename='images/favicon-16x16.png') }}">
+    <link rel="icon" type="image/png" sizes="192x192" href="{{ url_for('static', filename='images/android-chrome-192x192.png') }}">
+    <link rel="icon" type="image/png" sizes="512x512" href="{{ url_for('static', filename='images/android-chrome-512x512.png') }}">
     <link rel="preload" href="{{url_for('static', filename='fonts//RedHatDisplay-Regular.ttf')}}" as="font">
     <link rel="preload" href="{{url_for('static', filename='fonts///Sato-Medium.ttf')}}" as="font">
     <meta name="robots" content="noindex">
@@ -71,10 +76,10 @@
                 <p class="control">
                   <div class="select is-medium is-fullwidth">
                     <select name='Semester' class='content-font'>
-                      <option value='2023S1'>Semester 1 2023</option>
-                      <option value='2022S3'>Summer Semester 2022-23</option>
-                      <option value='2022S2'>Semester 2 2022</option>
-                      <option value='2022S1'>Semester 1 2022</option>
+                      <option value='2023S1' {% if sem == "2023S1" %} selected {% endif %}>Semester 1 2023</option>
+                      <option value='2022S3' {% if sem == "2022S3" %} selected {% endif %}>Summer Semester 2022-23</option>
+                      <option value='2022S2' {% if sem == "2022S2" %} selected {% endif %}>Semester 2 2022</option>
+                      <option value='2022S1' {% if sem == "2022S1" %} selected {% endif %}>Semester 1 2022</option>
                     </select>
                   </div>
                 </p>
@@ -197,8 +202,7 @@
   <footer class="footer">
     <div class="content has-text-centered">
       <p class="footer-p">
-        <strong class="footer-p">UQ Grade Calculator</strong> by UncleMitch.
-        <br>
+        <strong class="footer-p">UQ Grade Calculator</strong> by <a class="footer-p" href="https://github.com/Uncle-Mitch/uqmarks">UncleMitch</a>.
         Inspired by <a class="footer-p" href="https://uqfinal.com/">UQfinal</a>
       </p>
     </div>
