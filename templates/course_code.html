@@ -19,6 +19,14 @@
     <meta property='og:url'  content='https://www.uqmarks.com/'>
     <meta property='og:description'  content='SEMESTER 2 2022 - CALCULATE YOUR REQUIRED GRADES. Need to get a certain GPA? Easily calculate the mark required to get your desired grade at UQ with UQMARKS!'>
     <meta property="og:image" content="https://www.uqmarks.com/static/images/share.png" />
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-BW68VRSJ96"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-BW68VRSJ96');
+    </script>
   </head>
 <nav class="navbar purp-bg" role="navigation" aria-label="main navigation">
     <div class="navbar-brand">
@@ -55,7 +63,7 @@
       <h1 class="title text-light-purp is-size-1">
         UQMARKS Grade Calculator
       </h1>
-      <h2 class="text-white is-size-4">Summer Semester 2022-23 Now Available </h2>
+      <h2 class="text-white is-size-4">Semester 1 2023 Now Available </h2>
     </div>
   </section>
   <section class="section purp-bg body-align" id='section-main'>
@@ -68,6 +76,7 @@
                 <p class="control">
                   <div class="select is-medium is-fullwidth">
                     <select name='Semester' class='content-font'>
+                      <option value='2023S1' {% if sem == "2023S1" %} selected {% endif %}>Semester 1 2023</option>
                       <option value='2022S3' {% if sem == "2022S3" %} selected {% endif %}>Summer Semester 2022-23</option>
                       <option value='2022S2' {% if sem == "2022S2" %} selected {% endif %}>Semester 2 2022</option>
                       <option value='2022S1' {% if sem == "2022S1" %} selected {% endif %}>Semester 1 2022</option>
@@ -115,6 +124,8 @@
         </div>
 
         <div class="results-container">
+        <br>
+        
         <br>
           <h2 class="subtitle is-size-2 has-text-weight-semibold text-light-purp">Results</h2>
           <p class="subtitle text-light-purp" id="lbltotalScore">Total Score: 0.00%</p>
@@ -179,7 +190,8 @@
 
           </table>
         </div>
-
+        <br>
+        <p class="footer-p">The grade cutoffs are estimates and may differ to your course. Please check your course profile.</p>
       </div>
 
     </div>
@@ -190,7 +202,7 @@
   <footer class="footer">
     <div class="content has-text-centered">
       <p class="footer-p">
-        <strong class="footer-p">UQ Grade Calculator</strong> by <a class="footer-p" href="https://github.com/gricey432/unifinal">UncleMitch</a>.
+        <strong class="footer-p">UQ Grade Calculator</strong> by <a class="footer-p" href="https://github.com/Uncle-Mitch/uqmarks">UncleMitch</a>.
         Inspired by <a class="footer-p" href="https://uqfinal.com/">UQfinal</a>
       </p>
     </div>
