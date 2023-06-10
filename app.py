@@ -119,6 +119,10 @@ def all_routes(sem, text):
             ]
             
             result = requests.post(os.environ['LOG_LINK'], json = data, headers=headers)
+            #local logging
+            with open("logs/search_log.txt","a") as file:
+                currentTime = int(time.time())
+                file.write(f"{currentTime}|{text}|{semester}|{year}\n")
             return render_template('course_code.html', assessment_list=weightings, code=text, sem=sem)
     else:
         return render_template('invalid.html', code=text)
