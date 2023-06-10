@@ -8,6 +8,7 @@ from os import path
 from ast import literal_eval as make_tuple
 import os
 import time
+from pathlib import Path
 
 
 db = SQLAlchemy()
@@ -16,6 +17,8 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ['SECRET_KEY']
 app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{DB_NAME}'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+THIS_FOLDER = Path(__file__).parent.resolve()
+
 
 
 class Course(db.Model):
@@ -120,7 +123,7 @@ def all_routes(sem, text):
             
             result = requests.post(os.environ['LOG_LINK'], json = data, headers=headers)
             #local logging
-            with open("logs/search_log.txt","a") as file:
+            with open(THIS_FOLDER / "logs/search_log.txt","a") as file:
                 currentTime = int(time.time())
                 file.write(f"{currentTime}|{text}|{semester}|{year}\n")
             return render_template('course_code.html', assessment_list=weightings, code=text, sem=sem)
