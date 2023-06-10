@@ -2,6 +2,7 @@ import requests
 from bs4 import BeautifulSoup
 import json
 import os
+import time
 
 
 def return_url(code):
@@ -93,6 +94,11 @@ def get_assessments(code:str, semester:str, year:str):
             "title" : f"{code} - NEW CODE"
         }
     ]
+    
+    #local logging of events
+    with open("logs/new_log.txt","a") as file:
+        currentTime = int(time.time())
+        file.write(f"{currentTime}|{code}|{semester}|{year}\n")
 
     result = requests.post(os.environ['LOG_LINK'], json = data, headers=headers)
     return table
