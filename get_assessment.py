@@ -100,7 +100,7 @@ def get_assessments(code:str, semester:str, year:str):
         currentTime = int(time.time())
         file.write(f"{currentTime}|{code}|{semester}|{year}\n")
 
-    result = requests.post(os.environ['LOG_LINK'], json = data, headers=headers)
+    #result = requests.post(os.environ['LOG_LINK'], json = data, headers=headers)
     return table
 
 
