@@ -17,7 +17,7 @@ from datetime import datetime
 db = SQLAlchemy()
 DB_NAME = "course.sqlite"
 app = Flask(__name__)
-app.config['SECRET_KEY'] = "ABC" #os.environ['SECRET_KEY']
+app.config['SECRET_KEY'] = os.environ['SECRET_KEY']
 app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{DB_NAME}'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 THIS_FOLDER = Path(__file__).parent.resolve()
@@ -165,7 +165,7 @@ def quiz():
             "title" : "User opened the quiz page",
         }
     ]
-    #result = requests.post(os.environ['LOG_LINK'], json = data, headers=headers)
+    result = requests.post(os.environ['LOG_LINK'], json = data, headers=headers)
     return render_template('quiz.html')
 
 @app.route('/<path:sem>/<path:text>', methods=['GET','POST'])
@@ -198,7 +198,7 @@ def all_routes(sem, text):
                 }
             ]
             
-            #result = requests.post(os.environ['LOG_LINK'], json = data, headers=headers)
+            result = requests.post(os.environ['LOG_LINK'], json = data, headers=headers)
             #local logging
             with open(THIS_FOLDER / "logs/search_log.txt","a") as file:
                 currentTime = int(time.time())
