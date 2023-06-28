@@ -17,7 +17,7 @@ from datetime import datetime
 db = SQLAlchemy()
 DB_NAME = "course.sqlite"
 app = Flask(__name__)
-app.config['SECRET_KEY'] = os.environ['SECRET_KEY']
+app.config['SECRET_KEY'] = "ABC" #os.environ['SECRET_KEY']
 app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{DB_NAME}'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 THIS_FOLDER = Path(__file__).parent.resolve()
@@ -203,8 +203,6 @@ def all_routes(sem, text):
             with open(THIS_FOLDER / "logs/search_log.txt","a") as file:
                 currentTime = int(time.time())
                 file.write(f"{currentTime}|{text}|{semester}|{year}\n")
-                
-            print(sem)
             return render_template('course_code.html', assessment_list=weightings, code=text, sem=sem, semesters=semesters)
     else:
         return render_template('invalid.html', code=text, semesters=semesters)

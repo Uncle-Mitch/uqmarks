@@ -16,11 +16,11 @@
     <link rel="preload" href="{{url_for('static', filename='fonts//RedHatDisplay-Regular.ttf')}}" as="font">
     <link rel="preload" href="{{url_for('static', filename='fonts///Sato-Medium.ttf')}}" as="font">
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5647299176749275" crossorigin="anonymous"></script>
-    <meta name="description" content="SEMESTER 1 2023 - CALCULATE YOUR REQUIRED GRADES. Need to get a certain GPA? Easily calculate the mark required to get your desired grade at UQ with UQMARKS!">
+    <meta name="description" content="{{semesters[semesters.keys()|max()]}} - CALCULATE YOUR REQUIRED GRADES FOR EVERY UQ COURSE! need a certain GPA? Use this website.">
     <meta name="keywords" content="UQ, University of Queensland, Final Exam, uqmarks, mark calculator, final exam calculator, uqfinal">
     <meta property='og:title'  content='UQ Grade Calculator'>
     <meta property='og:url'  content='https://www.uqmarks.com/'>
-    <meta property='og:description'  content='SEMESTER 1 2023 - CALCULATE YOUR REQUIRED GRADES for UQ.'>
+    <meta property='og:description'  content='{{semesters[semesters.keys()|max()]}} - CALCULATE YOUR REQUIRED GRADES for UQ.'>
     <meta property="og:image" content="https://www.uqmarks.com/static/images/share.png" />
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-BW68VRSJ96"></script>
     <script>
