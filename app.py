@@ -17,7 +17,7 @@ from datetime import datetime
 db = SQLAlchemy()
 DB_NAME = "course.sqlite"
 app = Flask(__name__)
-app.config['SECRET_KEY'] = "ABC" #os.environ['SECRET_KEY']
+app.config['SECRET_KEY'] = os.environ['SECRET_KEY']
 app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{DB_NAME}'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 THIS_FOLDER = Path(__file__).parent.resolve()
