@@ -203,8 +203,6 @@ def all_routes(sem, text):
             with open(THIS_FOLDER / "logs/search_log.txt","a") as file:
                 currentTime = int(time.time())
                 file.write(f"{currentTime}|{text}|{semester}|{year}\n")
-                
-            print(sem)
             return render_template('course_code.html', assessment_list=weightings, code=text, sem=sem, semesters=semesters)
     else:
         return render_template('invalid.html', code=text, semesters=semesters)
