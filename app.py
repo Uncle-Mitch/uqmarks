@@ -147,17 +147,10 @@ def invalid():
 
 @app.route('/quiz', methods=['GET', 'POST'])
 def quiz():
-    headers = requests.utils.default_headers()
-    headers.update(
-        {
-            'User-Agent': 'My User Agent 1.0',
-        }
-    )
+    headers = get_headers()
 
-    data = {
-    "content" : "",
-    "username" : "UQmarks - QUIZ"
-    }
+    data = get_data()
+    data["username"] = "UQmarks - QUIZ"
 
     data["embeds"] = [
         {
@@ -171,7 +164,6 @@ def quiz():
 @app.route('/<path:sem>/<path:text>', methods=['GET','POST'])
 def all_routes(sem, text):
     semesters = get_semester_list()
-    print('hello')
     if len(text) == 8 and text[:4].isalpha() and text[4:].isnumeric():
         year, _, semester = sem.partition('S')
         try:
@@ -179,17 +171,8 @@ def all_routes(sem, text):
         except Exception as e:
             return render_template('invalid.html', code=text, semesters=semesters)
         else:
-            headers = requests.utils.default_headers()
-            headers.update(
-                {
-                    'User-Agent': 'My User Agent 1.0',
-                }
-            )
-
-            data = {
-            "content" : "",
-            "username" : "UQmarks"
-            }
+            headers = get_headers
+            data = get_data()
 
             data["embeds"] = [
                 {
@@ -210,6 +193,23 @@ def all_routes(sem, text):
 def start_app():
     create_database(app=app)
     app.run()
+    
+def get_headers():
+    headers = requests.utils.default_headers()
+    headers.update(
+        {
+            'User-Agent': 'My User Agent 1.0',
+        }
+    )
+    return headers
+    
+
+def get_data():
+    data = {
+            "content" : "",
+            "username" : "UQmarks"
+            }
+    return data
 
 if __name__== '__main__':
     start_app()

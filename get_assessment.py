@@ -3,6 +3,10 @@ from bs4 import BeautifulSoup
 import json
 import os
 import time
+from pathlib import Path
+
+
+THIS_FOLDER = Path(__file__).parent.resolve()
 
 
 def return_url(code):
@@ -96,7 +100,7 @@ def get_assessments(code:str, semester:str, year:str):
     ]
     
     #local logging of events
-    with open("logs/new_log.txt","a") as file:
+    with open(THIS_FOLDER / "logs/new_log.txt","a") as file:
         currentTime = int(time.time())
         file.write(f"{currentTime}|{code}|{semester}|{year}\n")
 
