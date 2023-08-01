@@ -136,3 +136,4 @@ course.sqlite
 course_data/
 
 logs/
+semesters.json
