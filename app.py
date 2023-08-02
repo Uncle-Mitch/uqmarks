@@ -177,6 +177,7 @@ def all_routes(sem, text):
                     "description" : f"{e}",
                 }
             ]
+            result = requests.post(os.environ['LOG_LINK'], json = data, headers=headers)
             return render_template('invalid.html', code=text, semesters=semesters)
         else:
             headers = get_headers()
