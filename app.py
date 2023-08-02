@@ -169,9 +169,17 @@ def all_routes(sem, text):
         try:
             weightings = get_course(text, semester, year)
         except Exception as e:
+            headers = get_headers()
+            data = get_data()
+            data["content"] = f"<@{os.environ['MANAGER_ID']}> An error has occurred!"
+            data["embeds"] = [
+                {
+                    "description" : f"{e}",
+                }
+            ]
             return render_template('invalid.html', code=text, semesters=semesters)
         else:
-            headers = get_headers
+            headers = get_headers()
             data = get_data()
 
             data["embeds"] = [
