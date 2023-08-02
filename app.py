@@ -174,6 +174,7 @@ def all_routes(sem, text):
             data["content"] = f"<@{os.environ['MANAGER_ID']}> An error has occurred!"
             data["embeds"] = [
                 {
+                    "title" : f"Input: {text}",
                     "description" : f"{e}",
                 }
             ]
