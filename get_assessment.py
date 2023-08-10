@@ -29,7 +29,7 @@ def get_page(code:str, semester:str , year:str):
     box = soup.find_all('tr')
     for i in box:
         text = i.text.strip()
-        if (year in text and semester in text and ('St Lucia' in text or 'Herston' in text or 'Gatton' in text or 'Ipswich' in text)
+        if (year in text and semester in text and ('St Lucia' in text or 'Herston' in text or 'Gatton' in text or 'Ipswich' in text or 'External' in text)
             and 'unavailable' not in text):
             href = i.find_all('a')[2]['href']
             return href
