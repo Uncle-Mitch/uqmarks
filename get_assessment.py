@@ -28,6 +28,9 @@ def get_page(code:str, semester:str , year:str):
     page = requests.get(link, headers=headers)
     soup = BeautifulSoup(page.text, 'html.parser')
     box = soup.find_all('tr')
+    
+    if len(box) == 0:
+        raise ValueError
 
     for i in box:
         text = i.text.strip()
