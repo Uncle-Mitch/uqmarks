@@ -4,6 +4,7 @@ from flask import Flask, render_template, redirect, request
 import json
 from get_assessment import *
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import exc
 from os import path
 from ast import literal_eval as make_tuple
 import os
@@ -11,6 +12,7 @@ import time
 from pathlib import Path
 from flask_caching import Cache
 from datetime import datetime
+import traceback
 
 
 
@@ -23,6 +25,8 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 THIS_FOLDER = Path(__file__).parent.resolve()
 app.config["CACHE_TYPE"] = "SimpleCache"
 cache = Cache(app)
+
+DEFAULT_INVALID_TEXT = "The ECP is currently unavailable or the code is invalid"
 
 
 
@@ -39,14 +43,23 @@ def get_course(code:str, semester:str, year:str):
     code=code.upper()
     sem = int(semester)
     yr = int(year)
-    found_course = Course.query.filter_by(code=code, year=yr, semester=sem).first()
-    if found_course:
+    
+    # Check if we have existing db entry for this course
+    found_course_count = db.session.query(Course).filter_by(code=code, year=yr, semester=sem).count()
+    if found_course_count >= 1:
+        found_course = db.session.query(Course).filter_by(code=code, year=yr, semester=sem).first()
         return make_tuple(found_course.asmts)
     weightings = get_assessments(code, semester, year)
     db_asmts = str(weightings)
     new_course = Course(code=code, semester=sem, year=yr, asmts=db_asmts)
-    db.session.add(new_course)
-    db.session.commit()
+    
+    # Sometimes error occurs due to unique constraint, we don't care about
+    # it, so we just pass it.
+    try:
+        db.session.add(new_course)
+        db.session.commit()
+    except exc.IntegrityError:
+        pass
     return weightings
 
 def create_database(app):
@@ -158,7 +171,7 @@ def quiz():
             "title" : "User opened the quiz page",
         }
     ]
-    result = requests.post(os.environ['LOG_LINK'], json = data, headers=headers)
+    #result = requests.post(os.environ['LOG_LINK'], json = data, headers=headers)
     return render_template('quiz.html')
 
 @app.route('/<path:sem>/<path:text>', methods=['GET','POST'])
@@ -168,6 +181,23 @@ def all_routes(sem, text):
         year, _, semester = sem.partition('S')
         try:
             weightings = get_course(text, semester, year)
+        except AttributeError as e:
+            headers = get_headers()
+            data = get_data()
+            data["content"] = f"<@{os.environ['MANAGER_ID']}> ECP cannot be found"
+            data["embeds"] = [
+                {
+                    "title" : f"Input: {text}",
+                    "description" : f"{e}",
+                }
+            ]
+            result = requests.post(os.environ['LOG_LINK'], json = data, headers=headers)
+            return render_template('invalid.html',
+                                   code=text,
+                                   sem=sem,
+                                   semesters=semesters,
+                                   invalid_text=f"The course does not exist for\
+                                   your chosen semester")
         except Exception as e:
             headers = get_headers()
             data = get_data()
@@ -179,7 +209,11 @@ def all_routes(sem, text):
                 }
             ]
             result = requests.post(os.environ['LOG_LINK'], json = data, headers=headers)
-            return render_template('invalid.html', code=text, semesters=semesters)
+            return render_template('invalid.html', 
+                                   code=text,
+                                   sem=sem,
+                                   semesters=semesters,
+                                   invalid_text=DEFAULT_INVALID_TEXT)
         else:
             headers = get_headers()
             data = get_data()
@@ -196,9 +230,16 @@ def all_routes(sem, text):
             with open(THIS_FOLDER / "logs/search_log.txt","a") as file:
                 currentTime = int(time.time())
                 file.write(f"{currentTime}|{text}|{semester}|{year}\n")
-            return render_template('course_code.html', assessment_list=weightings, code=text, sem=sem, semesters=semesters)
+            return render_template('course_code.html', 
+                                   assessment_list=weightings, 
+                                   code=text, sem=sem, 
+                                   semesters=semesters)
     else:
-        return render_template('invalid.html', code=text, semesters=semesters)
+        return render_template('invalid.html', 
+                               code=text, 
+                               semesters=semesters,
+                               sem=sem,
+                               invalid_text="The code is invalid.")
 
 def start_app():
     create_database(app=app)
