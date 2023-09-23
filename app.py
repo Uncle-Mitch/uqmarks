@@ -181,7 +181,7 @@ def all_routes(sem, text):
         year, _, semester = sem.partition('S')
         try:
             weightings = get_course(text, semester, year)
-        except AttributeError as e:
+        except CourseNotFoundError as e:
             headers = get_headers()
             data = get_data()
             data["content"] = f"<@{os.environ['MANAGER_ID']}> ECP cannot be found"
@@ -199,7 +199,6 @@ def all_routes(sem, text):
                                    invalid_text=f"The course does not exist for\
                                    your chosen semester")
         except Exception as e:
-            print(e)
             headers = get_headers()
             data = get_data()
             data["content"] = f"<@{os.environ['MANAGER_ID']}> An error has occurred!"
