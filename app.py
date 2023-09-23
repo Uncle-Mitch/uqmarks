@@ -199,6 +199,7 @@ def all_routes(sem, text):
                                    invalid_text=f"The course does not exist for\
                                    your chosen semester")
         except Exception as e:
+            print(e)
             headers = get_headers()
             data = get_data()
             data["content"] = f"<@{os.environ['MANAGER_ID']}> An error has occurred!"
