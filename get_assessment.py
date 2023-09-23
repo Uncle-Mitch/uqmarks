@@ -9,6 +9,11 @@ from pathlib import Path
 
 THIS_FOLDER = Path(__file__).parent.resolve()
 
+class CourseNotFoundError(Exception):
+    def __init__(self, course: str):
+        self.message = f"The course '{course}' could not be found or does not exist."
+        super().__init__(self.message)
+
 
 def return_url(code):
     return f'https://my.uq.edu.au/programs-courses/course.html?course_code={code}'
@@ -30,18 +35,14 @@ def get_page(code:str, semester:str , year:str):
     box = soup.find_all('tr')
     
     if len(box) == 0:
-        raise ValueError
+        raise CourseNotFoundError(code)
 
     for i in box:
         text = i.text.strip()
         if (year in text and semester in text 
-            and ('St Lucia' in text 
-                 or 'Herston' in text 
-                 or 'Gatton' in text 
-                 or 'Ipswich' in text
-                 or 'External' in text)
             and 'unavailable' not in text):
-            href = i.find_all('a')[2]['href']
+            h = i.find_all('a', class_="profile-available")
+            href = h[0]['href']
             return href
 
 
@@ -55,9 +56,14 @@ def get_table(section_code):
     url = f'https://www.courses.uq.edu.au/student_section_report.php?report=assessment&profileIds={section_code}'
     page = requests.get(url, headers=headers)
 
-    df_list = pd.read_html(page.text) # Gets all tables in website
+    #Replace with BR to deal with the following:
+    # Computer Exercise <br /> Assignment 1
+    df_list = pd.read_html(page.text.replace('<br />','||'))
     df = df_list[1] # Gets the asessment table
     df = df.drop(columns=["Course", "Due Date"])
+
+    # Remove jargon like "Computer Exercises" or "Exam during central period.."
+    df['Assessment Task'] = df['Assessment Task'].str.partition("||")[2]
 
     df.loc[df['Weighting'].str.contains("%"), ['Weighting']] = df['Weighting'].str.partition('%')[0]  + "%"
     return list(df.itertuples(index=False, name=None))
