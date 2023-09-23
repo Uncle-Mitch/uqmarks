@@ -181,7 +181,7 @@ def all_routes(sem, text):
         year, _, semester = sem.partition('S')
         try:
             weightings = get_course(text, semester, year)
-        except AttributeError as e:
+        except CourseNotFoundError as e:
             headers = get_headers()
             data = get_data()
             data["content"] = f"<@{os.environ['MANAGER_ID']}> ECP cannot be found"
