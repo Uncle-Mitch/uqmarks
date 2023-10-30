@@ -110,13 +110,13 @@
             <thead>
               <th>Assessment</th>
               <th>Weight</th>
-              <th>Your Score (%)</th>
+              <th>Your Score</th>
             </thead>
             {% for name, weight in assessment_list %}
             <tr>
                 <td>{{ name }}</td>
                 <td>{{ weight }}</td>
-                <td><input onchange="calculate()" data-weight={{weight}} name="score" class="input score-input" type="text" placeholder="" style="width: 100%;"></td>
+                <td><input onchange="calculate()" data-weight={{weight}} name="score" class="input score-input" type="text" placeholder="90, 90% or 9/10" style="width: 100%;"></td>
             </tr>
             {% endfor %}
           </table>

@@ -13,6 +13,13 @@ class CourseNotFoundError(Exception):
     def __init__(self, course: str):
         self.message = f"The course '{course}' could not be found or does not exist."
         super().__init__(self.message)
+        
+class WrongSemesterError(Exception):
+    def __init__(self, course: str, sem: str):
+        self.message = f"The course '{course}' does not exist in the selected semester. (Semester {sem})"
+        if sem == 3:
+            self.message = f"The course '{course}' does not exist in the summer semester."
+        super().__init__(self.message)
 
 
 def return_url(code):
@@ -32,10 +39,10 @@ def get_page(code:str, semester:str , year:str):
     )
     page = requests.get(link, headers=headers)
     soup = BeautifulSoup(page.text, 'html.parser')
-    box = soup.find_all('tr')
     
-    if len(box) == 0:
+    if soup.find(id='course-notfound') is not None:
         raise CourseNotFoundError(code)
+    box = soup.find_all('tr')
 
     for i in box:
         text = i.text.strip()
@@ -71,6 +78,8 @@ def get_table(section_code):
 
 def get_assessments(code:str, semester:str, year:str):
     course_profile = get_page(code, semester, year)
+    if course_profile is None:
+        raise WrongSemesterError(code, semester)
     section_code = course_profile.rpartition('/')[2]
     table = get_table(section_code)
 
