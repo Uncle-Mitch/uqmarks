@@ -58,7 +58,7 @@ def get_course(code:str, semester:str, year:str):
     try:
         db.session.add(new_course)
         db.session.commit()
-    except exc.IntegrityError:
+    except exc.IntegrityError as e:
         pass
     return weightings
 
@@ -171,7 +171,7 @@ def quiz():
             "title" : "User opened the quiz page",
         }
     ]
-    #result = requests.post(os.environ['LOG_LINK'], json = data, headers=headers)
+    result = requests.post(os.environ['LOG_LINK'], json = data, headers=headers)
     return render_template('quiz.html')
 
 @app.route('/<path:sem>/<path:text>', methods=['GET','POST'])
@@ -181,23 +181,20 @@ def all_routes(sem, text):
         year, _, semester = sem.partition('S')
         try:
             weightings = get_course(text, semester, year)
+        # We couldn't find the specified course.
         except CourseNotFoundError as e:
-            headers = get_headers()
-            data = get_data()
-            data["content"] = f"<@{os.environ['MANAGER_ID']}> ECP cannot be found"
-            data["embeds"] = [
-                {
-                    "title" : f"Input: {text}",
-                    "description" : f"{e}",
-                }
-            ]
-            result = requests.post(os.environ['LOG_LINK'], json = data, headers=headers)
             return render_template('invalid.html',
                                    code=text,
                                    sem=sem,
                                    semesters=semesters,
-                                   invalid_text=f"The course does not exist for\
-                                   your chosen semester")
+                                   invalid_text=e.message)
+        # Usually happens when the course is not offered in that semester
+        except WrongSemesterError as e:
+            return render_template('invalid.html',
+                                   code=text,
+                                   sem=sem,
+                                   semesters=semesters,
+                                   invalid_text=e.message)
         except Exception as e:
             headers = get_headers()
             data = get_data()
@@ -208,7 +205,7 @@ def all_routes(sem, text):
                     "description" : f"{e}",
                 }
             ]
-            result = requests.post(os.environ['LOG_LINK'], json = data, headers=headers)
+            result = requests.post(os.environ['ERROR_LOG_LINK'], json = data, headers=headers)
             return render_template('invalid.html', 
                                    code=text,
                                    sem=sem,

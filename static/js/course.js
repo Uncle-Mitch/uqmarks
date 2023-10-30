@@ -6,21 +6,56 @@ function calculate(){
   for (let i = 0; i < scores.length; i++) {
     let weight = parseFloat((scores[i].dataset.weight))
     if (scores[i].disabled === false) {
-    if (! isNaN(parseFloat(scores[i].value))) {
-      let score = parseFloat(scores[i].value)
-      if (score >= 100){
-        score = 100
-        scores[i].value = score
-      } else if (score <= 0){
-        score = 0
-        scores[i].value = score
+      var resultArray = scores[i].value.split("/");
+
+      if (resultArray.length != 2 
+        && scores[i].value.length != 0 
+        && resultArray.length != 1) {
+        scores[i].classList.add("is-danger");
+        continue;
+      } else if (scores[i].classList.contains('is-danger')) {
+          scores[i].classList.remove("is-danger");
       }
-      total_score += score*(weight/100);
-    } else if (scores[i].disabled === false) {
-      undecided += weight/100
-    }
+
+      let scoreStr = resultArray[0];
+      let maxScoreStr = null;
+      if (resultArray.length == 2) {
+        maxScoreStr = resultArray[1];
+      }
+
+      // If they provided numerator but not denominator of fraction
+      // and vice versa
+      if (scores[i].value.includes("/") 
+          && (isNaN(parseFloat(maxScoreStr)) || isNaN(parseFloat(scoreStr)))) {
+        scores[i].classList.add("is-danger");
+        continue;
+      }
+
+      
+
+      if (! isNaN(parseFloat(scoreStr))) {
+        let score = parseFloat(scoreStr);
+        
+        // If the user decided to do fractions
+        if (maxScoreStr != null ) {
+          score = (score*100)/parseFloat(maxScoreStr);
+        }
+
+        // Bound the scores to 0 and 100% respectively.
+        if (score > 100){
+          score = 100
+          scores[i].value = score + "%" // Explicit % sign for users
+        } else if (score < 0){
+          score = 0
+          scores[i].value = score  + "%"
+        }
+        total_score += score*(weight/100);
+      } else if (scores[i].disabled === false) {
+        undecided += weight/100
+      }
    }
   }
+
 
 
 
