@@ -78,7 +78,8 @@ function calculate(){
   }
 
   let numToRemove = numOfQuiz - numCount;
-  var goodScores = scoresArr.sort((a,b) => a + b)
+  let goodScores = scoresArr.slice().sort((a, b) => b - a);
+
   // sort array to get eliminate values
   if (numToRemove > 0) {
     goodScores = goodScores.slice(0, numCount);
