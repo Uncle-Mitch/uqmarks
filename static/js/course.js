@@ -92,6 +92,9 @@ function onStart() {
     if (scores[i].dataset.weight.toLowerCase().indexOf("%") === -1) {
       scores[i].disabled = true;
     }
+    else if (scores[i].dataset.weight.toLowerCase() == "10%") {
+      scores[i].disabled = true;
+    }
   }
 return false;
 }
