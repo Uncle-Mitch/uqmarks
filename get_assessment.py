@@ -72,6 +72,8 @@ def get_table(section_code):
     # Remove jargon like "Computer Exercises" or "Exam during central period.."
     df['Assessment Task'] = df['Assessment Task'].str.partition("||")[2]
 
+    # Edge case where weight = 0% and UQ left the weight 'blank'
+    df = df.dropna()
     df.loc[df['Weighting'].str.contains("%"), ['Weighting']] = df['Weighting'].str.partition('%')[0]  + "%"
     return list(df.itertuples(index=False, name=None))
 
