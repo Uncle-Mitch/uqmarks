@@ -104,6 +104,21 @@ body {
     padding-left: 5%;
     padding-right: 5%;
   }
+
+  .score-input {
+    font-size: 12px;
+  }
+
+}
+
+@media only screen and (max-width: 1400px) {
+  .dash-body, .body-align {
+    padding-left: 0% !important;
+    padding-right: 0% !important;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  
 }
 
 #submitBtn{
@@ -138,7 +153,81 @@ div {
   border-style: solid;
   border-radius: 6px;
   border-color: #000;
+  font-size: 16px;
 }
+
+.figure {
+  border-radius: 6px;
+  background-color:#F4EAFF;
+  justify-content: center;
+  align-items: center;
+  font-family: contentFont;
+  cursor: default !important;
+}
+
+.dropdown-custom .Select-control {
+  min-height: 200px; /* Set the minimum height */
+}
+
+.dash-iframe {
+  width: 100%;
+  height: 120vh;
+  border: none; /* Remove border if not needed */
+  overflow: hidden;
+  border-radius: 6px;
+}
+
+.dash-input {
+  align-items: center !important;
+  justify-content: center;
+}
+
+.plot-container {
+  align-items: center !important;
+  justify-content: center;
+  overflow: hidden !important;
+}
+
+.SingleDatePickerInput {
+  border: 0px;
+}
+
+/* Fix box width of datepicker to be 100% of parent container*/
+.DateInput, .DateInput_1 {
+  width: 100%; /* replace with whatever length you prefer */
+}
+
+/* Fix the font size and other stuff of datepicker*/
+.DateInput_input, .DateInput_input_1 {
+  /* my personal stuff */
+  text-align: center;
+  /*line-height: calc(1.5em + 0.75rem);*/
+  /*width: 50%;*/
+  /* default flatly stuff */
+  height:20% !important;
+  /*height: calc(1.5em + 0.75rem + 2px);*/
+  font-size: 0.9375rem;
+  font-weight: 400;
+  color: #48206C;
+  background-color: #fff;
+  background-clip: padding-box;
+  border: 'none';
+  border-radius: 0.25rem;
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.Select-input{
+  height: 25px;
+}
+
+.Select-control{
+  height: 27px;
+}
+
+.Select-placeholder{
+  line-height: 100px;
+}
+
 
 th {
   text-align: center !important;

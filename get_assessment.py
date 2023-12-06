@@ -75,6 +75,9 @@ def get_table(section_code):
     # Edge case where weight = 0% and UQ left the weight 'blank'
     df = df.dropna()
     df.loc[df['Weighting'].str.contains("%"), ['Weighting']] = df['Weighting'].str.partition('%')[0]  + "%"
+
+    # Remove breaklines and extra "change as desired" message
+    df.loc[df['Assessment Task'].str.contains("||"), ['Assessment Task']] = df['Assessment Task'].str.partition('||')[0]
     return list(df.itertuples(index=False, name=None))
 
 
@@ -110,7 +113,7 @@ def get_assessments(code:str, semester:str, year:str):
         currentTime = int(time.time())
         file.write(f"{currentTime}|{code}|{semester}|{year}\n")
 
-    result = requests.post(os.environ['LOG_LINK'], json = data, headers=headers)
+    #result = requests.post(os.environ['LOG_LINK'], json = data, headers=headers)
     return table
 
 
