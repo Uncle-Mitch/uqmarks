@@ -283,15 +283,85 @@ def update_output(start_date, end_date, code, sem_text, interval):
         year, _, semester = sem_text.partition('S')
         year = int(year)
         semester = int(semester)
+
+
+    box_style = {
+        'padding': '10px',  # Padding inside the box
+        'background-color': '#0D6DCD',  # Background color
+        'width': '250px',  # Adjust width to fit content
+        'margin': '0',
+        'color': '#FFFFFF'
+    }
+
+    # Define outer box styles with rounded edges
+    left_box_style = {
+        'background-color': '#4285F4',
+        'border-radius': '10px 0 0 10px',  # Rounded corners on the left box
+    }
+
+    # Define middle box style without rounded edges
+    middle_box_style = {
+        'background-color': '#5E35B1',
+        'border-left': '1px solid rgba(0, 0, 0, 0.9)',
+        'border-right': '1px solid rgba(0, 0, 0, 0.9)',
+        'border-radius': '0',  # No rounded corners
+    }
+
+    # Define outer box styles with rounded edges
+    right_box_style = {
+        'background-color': '#00897B',
+        'border-radius': '0 10px 10px 0',  # Rounded corners on the right box
+    }
+
+    file_path = THIS_FOLDER / "logs/search_log.txt"
+    df = load_data(path=file_path, year=year, semester=semester, start_date=start_date, end_date=end_date)
+    
+    fig1, df_daily = generate_plot(df, code, interval=interval)
+    fig2, df_frequency = plot_most_frequent_codes(df, code, interval=interval)
+
+    # Calculate number of days in timeframe
+    if end_date is None:
+        analysis_end_date = datetime.now().date()
+    else:
+        analysis_end_date = datetime.strptime(end_date, '%Y-%m-%d').date()
+
+    analysis_start_date = datetime.strptime(start_date, '%Y-%m-%d').date()
+    days_elapsed = (analysis_end_date - analysis_start_date).days
+
+    total_searches = len(df)
+    top_search_query = df_frequency.iloc[0]['code']
+    average_per_day = len(df) / days_elapsed
+
+       
     return html.Div([
+        html.Div([
+            # Total Number of Searches
+            html.Div([
+                html.P(f"Total Searches", style={'margin': '0'}),
+                html.H3(f"{total_searches}", style={'margin': '0'})],
+                style={**box_style, **left_box_style}
+            ),
+            # Top Search Query
+            html.Div([
+                html.P(f"Most Searched Course", style={'margin': '0'}),
+                html.H3(f"{top_search_query}", style={'margin': '0'})],
+                style={**box_style, **middle_box_style}
+            ),
+            # Average Per Day
+            html.Div([
+                html.P(f"Average Per Day", style={'margin': '0'}),
+                html.H3(f"{average_per_day:.2f}", style={'margin': '0'})],
+                style={**box_style, **right_box_style}
+            )
+        ], style={'display': 'flex'}),  # Display as a row using flexbox
         dcc.Graph(
             id='frequency-chart-1',
-            figure=generate_plot(start_date, end_date, code, year=year, semester=semester, interval=interval),
+            figure=fig1,
             config=config
         ),
         dcc.Graph(
             id='frequency-chart-2',
-            figure=plot_most_frequent_codes(start_date, end_date, code, year=year, semester=semester),
+            figure=fig2,
             config=config
         )
     ])
@@ -312,7 +382,8 @@ def update_date_picker(start_range):
             start_date = dt.now() - relativedelta(months=12)
         case _:
             start_date = None  # Default to all time
-
+            return start_date
+    start_date = start_date.date()
     return start_date
 
 
@@ -322,6 +393,7 @@ def start_app():
     
     create_database(app=app)
     app.run(debug=True)
+    
     
 def get_headers():
     headers = requests.utils.default_headers()

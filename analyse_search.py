@@ -72,9 +72,17 @@ def analyze_frequent_codes(df, top_n=-1, select_code=None):
     
     return top_codes
 
-def plot_most_frequent_codes(start_date=None, end_date=None, highlight_code=None, year=None, semester=None):
-    file_path = THIS_FOLDER / "logs/search_log.txt"
-    df = load_data(path=file_path, year=year, semester=semester, start_date=start_date, end_date=end_date)
+def plot_most_frequent_codes(df:pd.DataFrame, highlight_code:str, interval="D"):
+    """Returns a plotly bar plot of the most searched codes in the dataframe
+
+    Args:
+        df (pd.DataFrame): dataframe of all the searches within a given timeframe
+        highlight_code (str): Course Code that user wants to be highlighted
+        interval (str, optional): Interval of aggregation (e.g. hourly, daily etc). Defaults to "D".
+
+    Returns:
+        px.bar: plotly express bar plot - showing top 10 most searched courses
+    """
     df = analyze_frequent_codes(df, top_n=10, select_code=highlight_code).reset_index()
     del df[df.columns[0]] 
 
@@ -97,14 +105,28 @@ def plot_most_frequent_codes(start_date=None, end_date=None, highlight_code=None
     })
 
     fig.update_layout(font=dict(family='Arial', size=14, color='black'),
-                     margin=dict(l=40, r=20)) 
+                     margin=dict(l=40, r=20))
 
-    return fig
+    fig.update_traces(hovertemplate="<br>".join([
+                            "Course: %{x}",
+                            "Searches : %{y}"
+                        ])
+                    ) 
+
+    return fig, df
 
 
-def generate_plot(start_date=None, end_date=None, code=None, year=None, semester=None, interval="D"):
-    file_path = THIS_FOLDER / "logs/search_log.txt"
-    df = load_data(path=file_path, year=year, semester=semester, start_date=start_date, end_date=end_date)
+def generate_plot(df:pd.DataFrame, code:str, interval="D"):
+    """Returns a plotly line graph of all the searches containing a given code.
+
+    Args:
+        df (pd.DataFrame): dataframe of all the searches within a given timeframe
+        highlight_code (str): Course Code that user wants to be highlighted
+        interval (str, optional): Interval of aggregation (e.g. hourly, daily etc). Defaults to "D".
+
+    Returns:
+        px.line: plotly express line graph - a graph of date vs searches in every interval
+    """
     if code and len(code) == 8:
         code = code.upper()
         df = search_data(df, code)
@@ -114,6 +136,7 @@ def generate_plot(start_date=None, end_date=None, code=None, year=None, semester
     df_daily = group_data(df, interval).to_frame().reset_index()
     df_daily.columns = ['timestamp', 'count']
     df_daily['timestamp'] = pd.to_datetime(df_daily['timestamp'])  # Convert 'timestamp' back to datetime
+
 
     fig = px.line(df_daily, x='timestamp', y='count', 
                   title='Searches Aggregated By Day', 
@@ -128,11 +151,16 @@ def generate_plot(start_date=None, end_date=None, code=None, year=None, semester
         'dragmode': False,
     })
 
-    fig.update_traces(line={'width': 5, 'color':'#48206C'})
+    fig.update_traces(line={'width': 5, 'color':'#48206C'},
+                      hovertemplate="<br>".join([
+                            "Date: %{x}",
+                            "Searches: %{y}"
+                        ])
+                    )
     fig.update_layout(font=dict(family='Arial', size=14, color='black'),
                      margin=dict(l=40, r=20)) 
 
-    return fig
+    return fig, df_daily
 
 def generate_time_range_options():
     return [
@@ -184,10 +212,11 @@ def generate_dashboard(semesters_list):
                         dbc.Label("Date Range", className='content-font'),
                         dcc.DatePickerRange(
                             id='date-picker-range',
+                            display_format='DD/MM/YYYY',
                             min_date_allowed=dt(2023, 2, 1),
-                            max_date_allowed=dt.now()-relativedelta(days=1),
+                            max_date_allowed=(dt.now()-relativedelta(days=1)).date(),
                             initial_visible_month=dt.now(),
-                            start_date=dt.now()-relativedelta(months=5),
+                            start_date=(dt.now()-relativedelta(months=6)).date(),
                             clearable=True,
                             className="content-font",
                             style={'width': '100%', 'height': '50%', 'border-radius': '6px'}
