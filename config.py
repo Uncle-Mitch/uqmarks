@@ -1,0 +1,2 @@
+DEBUG_MODE = True
+ENABLE_LOGGING = False
