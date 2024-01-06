@@ -4,6 +4,7 @@ from flask import Flask, render_template, redirect, request, url_for
 import json
 from get_assessment import *
 from analyse_search import *
+from log_events import *
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import exc
 from os import path
@@ -49,7 +50,7 @@ def dash_app():
         hostname = request.url_root.split('://')[1].split(':')[0]  # Extracting the hostname
         host_ip = socket.gethostbyname(hostname)
 
-        # Check if the client IP is in the allowed IP list
+        # Only allow the server (uqmarks.com) to access the dash page instead of everyone
         if ipaddress.ip_address(client_ip) == ipaddress.ip_address(host_ip):
             # Allow access only if the referrer matches and IP is allowed
             return dash_app.index()
@@ -179,20 +180,10 @@ def redirect_code():
 def invalid():
     return render_template('invalid.html', semesters=get_semester_list())
 
-@app.route('/quiz', methods=['GET', 'POST'])
+@app.route('/quiz', methods=['GET'])
 def quiz():
-    headers = get_headers()
-
-    data = get_data()
-    data["username"] = "UQmarks - QUIZ"
-
-    data["embeds"] = [
-        {
-            "description" : "Quiz was used",
-            "title" : "User opened the quiz page",
-        }
-    ]
-    #result = requests.post(os.environ['LOG_LINK'], json = data, headers=headers)
+    if app.config['ENABLE_LOGGING']:
+        log_quiz()
     return render_template('quiz.html')
 
 @app.route('/<path:sem>/<path:text>', methods=['GET','POST'])
@@ -217,38 +208,15 @@ def all_routes(sem, text):
                                    semesters=semesters,
                                    invalid_text=e.message)
         except Exception as e:
-            print(e)
-            headers = get_headers()
-            data = get_data()
-            #data["content"] = f"<@{os.environ['MANAGER_ID']}> An error has occurred!"
-            data["embeds"] = [
-                {
-                    "title" : f"Input: {text}",
-                    "description" : f"{e}",
-                }
-            ]
-            #result = requests.post(os.environ['ERROR_LOG_LINK'], json = data, headers=headers)
+            if app.config['ENABLE_LOGGING']:
+                log_error(e, text, semester, year)
             return render_template('invalid.html', 
                                    code=text,
                                    sem=sem,
                                    semesters=semesters,
                                    invalid_text=DEFAULT_INVALID_TEXT)
         else:
-            headers = get_headers()
-            data = get_data()
-
-            data["embeds"] = [
-                {
-                    "description" : f"{semester} {year}",
-                    "title" : text,
-                }
-            ]
-            
-            #result = requests.post(os.environ['LOG_LINK'], json = data, headers=headers)
-            #local logging
-            with open(THIS_FOLDER / "logs/search_log.txt","a") as file:
-                currentTime = int(time.time())
-                file.write(f"{currentTime}|{text}|{semester}|{year}\n")
+            log_search(text, semester, year, THIS_FOLDER, app.config['ENABLE_LOGGING'])
             return render_template('course_code.html', 
                                    assessment_list=weightings, 
                                    code=text, sem=sem, 
@@ -389,28 +357,10 @@ def update_date_picker(start_range):
 
 
 def start_app():
-    semesters_list = get_semester_list()
-    
+    get_semester_list()
     create_database(app=app)
-    app.run(debug=True)
-    
-    
-def get_headers():
-    headers = requests.utils.default_headers()
-    headers.update(
-        {
-            'User-Agent': 'My User Agent 1.0',
-        }
-    )
-    return headers
-    
-
-def get_data():
-    data = {
-            "content" : "",
-            "username" : "UQmarks"
-            }
-    return data
+    app.config['ENABLE_LOGGING'] = ENABLE_LOGGING 
+    app.run(debug=DEBUG_MODE)
 
 dash_app.layout = generate_dashboard(get_semester_list())
 if __name__== '__main__':
