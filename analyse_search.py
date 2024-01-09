@@ -9,12 +9,15 @@ from dateutil.relativedelta import relativedelta
 
 THIS_FOLDER = Path(__file__).parent.resolve()
 
-def load_data(path, semester=None, year=None, start_date=None, end_date=None):
+def load_data(path):
     df = pd.read_csv(path, sep='|', header=None)
 
     df.columns = ['timestamp', 'code', 'semester', 'year']
     df['timestamp'] = pd.to_datetime(df['timestamp'], unit='s')
+    return df
+    
 
+def filter_data(df, semester=None, year=None, start_date=None, end_date=None):
     ## YYYY-MM-DD for start_date and end_date
     if start_date is not None:
         df = df[df['timestamp'] >= start_date]
@@ -36,7 +39,7 @@ def search_data(df, code):
     
     return filtered_data
 
-def group_data(df, increment='D'):
+def group_data(df, interval='D'):
     """
     Plot the number of data points over time based on the specified increment.
 
@@ -50,10 +53,9 @@ def group_data(df, increment='D'):
     """
     # Set the 'timestamp' column as the index
     df.set_index('timestamp', inplace=True)
-    time_words = {'D': 'Day', 'W': 'Week', 'M': 'Month', 'H': 'Hour'}
 
     # Resample the data by the specified increment and count the occurrences
-    data_increment = df.resample(increment).size()
+    data_increment = df.resample(interval).size()
 
     return data_increment
 
@@ -63,14 +65,19 @@ def analyze_frequent_codes(df, top_n=-1, select_code=None):
 
     # Select the top N most frequently searched codes
     top_codes = code_counts.head(top_n)
-
+    ranking = None
+    if select_code is not None and select_code.upper() in top_codes['code'].values:
+        ranking = code_counts.loc[code_counts['code'] == select_code.upper()].index[0]
+    
     if select_code and select_code.upper() in code_counts['code'].values \
         and select_code.upper() not in top_codes['code'].values:
         entry = code_counts.loc[code_counts['code'] == select_code.upper()]
+        ranking = entry .index[0]
         top_codes = pd.concat([top_codes, entry])
     
-    
-    return top_codes
+    if ranking is not None:
+        ranking += 1 # zero-based indexing
+    return top_codes, ranking
 
 def plot_most_frequent_codes(df:pd.DataFrame, highlight_code:str, interval="D"):
     """Returns a plotly bar plot of the most searched codes in the dataframe
@@ -83,38 +90,54 @@ def plot_most_frequent_codes(df:pd.DataFrame, highlight_code:str, interval="D"):
     Returns:
         px.bar: plotly express bar plot - showing top 10 most searched courses
     """
-    df = analyze_frequent_codes(df, top_n=10, select_code=highlight_code).reset_index()
+    df, ranking = analyze_frequent_codes(df, top_n=10, select_code=highlight_code)
+    df = df.reset_index()
     del df[df.columns[0]] 
-
-    # [(0, "#DBBAFF"), (0.2, "#B368FF"), (0.6, "#682F9E"), (1, "#48206C")]
 
     fig = px.bar(df, x='code', y='frequency', 
                  title='Most Frequently Searched Codes')
     
     fig.update_layout(showlegend=False, coloraxis_showscale=False)
 
+    #FF9999
+    #48206C
+    index = 0
+    colors = ["#8299FF", "#83C135", "#ECA11B", "#2AA170", "#F37EC0", "#F2C428", "#40B3D8", "#8E8CFF", "#EB5DA6", "#39CFC2"]
+    markers = []
+    for code in fig["data"][0]["x"]:
+        if highlight_code and code == highlight_code.upper():
+            markers.append("#FF9999")
+        else:
+            markers.append(colors[index])
+            index += 1
     fig["data"][0]["marker"]["color"] = ["#FF9999" if highlight_code and code == highlight_code.upper() 
-                                         else "#48206C" for code in fig["data"][0]["x"]]
+                                        else "#0D6DCD" for code in fig["data"][0]["x"]]
 
     fig.update_layout({
         'plot_bgcolor': 'rgba(0,0,0,0)',  # Set plot background color
         'paper_bgcolor': 'rgba(0,0,0,0)',  # Set paper background color
         'xaxis': {'title': {'text': 'Course Code'}},  # Customize x-axis
-        'yaxis': {'title': {'text': 'Number of Searches'}, 'showgrid': True, 'gridcolor':'black'},  # Customize y-axis
+        'yaxis': {'title': {'text': 'Number of Searches'}, 'showgrid': True, 'gridcolor':'#C4C4C4'},  # Customize y-axis
         'dragmode': False,
     })
 
     fig.update_layout(font=dict(family='Arial', size=14, color='black'),
-                     margin=dict(l=40, r=20))
+                    margin=dict(l=40, r=20),
+                    hoverlabel=dict(
+                        bgcolor="white",
+                        font_size=14,
+                        bordercolor='white',
+                        font_family='Arial',
+                        font=dict(color='black'))
+                    )
 
     fig.update_traces(hovertemplate="<br>".join([
-                            "Course: %{x}",
-                            "Searches : %{y}"
+                            "Course: <b>%{x}</b>",
+                            "Searches: <b>%{y}</b>"
                         ])
                     ) 
 
-    return fig, df
-
+    return fig, df, ranking
 
 def generate_plot(df:pd.DataFrame, code:str, interval="D"):
     """Returns a plotly line graph of all the searches containing a given code.
@@ -141,26 +164,43 @@ def generate_plot(df:pd.DataFrame, code:str, interval="D"):
     fig = px.line(df_daily, x='timestamp', y='count', 
                   title='Searches Aggregated By Day', 
                   labels={'timestamp': 'Date', 'count': 'Number of Searches'})
+    
+    # Do not show "Day" of month
+    if interval == "M":
+        fig.update_layout({
+            'xaxis': {
+                'tickformat': '%b %Y'
+            }
+        })
 
-    # Configure Plotly options
     fig.update_layout({
         'plot_bgcolor': 'rgba(0,0,0,0)',
         'paper_bgcolor': 'rgba(0,0,0,0)',
-        'xaxis': {'title': {'text': 'Date'}, 'showgrid': False}, 
-        'yaxis': {'title': {'text': 'Number of Searches'}, 'showgrid': True, 'gridcolor':'black'},
+        'xaxis': {'title': {'text': 'Date'}, 'showgrid': False, 'zeroline':False}, 
+        'yaxis': {'title': {'text': 'Number of Searches'}, 'showgrid': True, 'gridcolor':'#C4C4C4', 'zeroline':False},
         'dragmode': False,
     })
 
-    fig.update_traces(line={'width': 5, 'color':'#48206C'},
+    fig.update_traces(line={'width': 3, 'color':'#48206C'},
                       hovertemplate="<br>".join([
-                            "Date: %{x}",
-                            "Searches: %{y}"
+                            "Searches: <b>%{y}</b>"
                         ])
                     )
     fig.update_layout(font=dict(family='Arial', size=14, color='black'),
-                     margin=dict(l=40, r=20)) 
+                     margin=dict(l=40, r=20),
+                     hovermode="x unified",
+                     hoverlabel=dict(
+                        bgcolor="white",
+                        font_size=14,
+                        bordercolor='white',
+                        font_family='Arial'
+                    )) 
+    
+    # Creates vertical spike for x axis
+    fig.update_xaxes(showspikes=True, spikecolor="#C4C4C4", spikesnap="cursor", spikemode="across",
+                     spikedash="solid", spikethickness=-2)
 
-    return fig, df_daily
+    return fig, df
 
 def generate_time_range_options():
     return [
@@ -171,45 +211,22 @@ def generate_time_range_options():
         {'label': 'Custom', 'value': 'CUSTOM'}
     ]
 
-def generate_dashboard(semesters_list):
-    semesters_list["NONE"] = 'None'
-    return html.Div([
-        html.H3("Filters for the data:"),
-        html.Br(),
-        dbc.Row(
-            [
-                dbc.Col(
-                    html.Div([
-                        dbc.Label("Course Code", className='content-font'),
-                        dbc.Input(
-                            id="search-input",
-                            placeholder="Course Code",
-                            className="input analytics-input content-font",
-                            type="text",
-                            maxLength=8,
-                            required=False,
-                            autocomplete='off',
-                            style={'width': '100%', 'height': '100%', 'border-radius': '6px', 'border': 'none', 'padding': '10px'}
-                            ),
-                        ]),
-                    style={'display': 'inline-block', 'align-items': 'left', 'height': '100%', 'width':'100%'},
-                ),
-                dbc.Col(
-                    html.Div([
-                        dbc.Label("Semester", className='content-font'),
-                        dbc.Select(
-                            id="semester-select",
-                            options=semesters_list,
-                            value='NONE'
-                            )
-                    ],
-                    className='analytics-input',
-                    style={"min-height":'10px', "font-size": "14",
-                           "border-radius": '6px'}),
-                ),
-                dbc.Col(
-                    html.Div([
-                        dbc.Label("Date Range", className='content-font'),
+def get_modal():
+    modal_content = [
+                dbc.ModalHeader(dbc.ModalTitle("Select Date Range")),
+                dbc.ModalBody([
+                        dbc.RadioItems(
+                            id='date-range-radio',
+                            options=[
+                                {'label': 'Last 30 days', 'value': '30'},
+                                {'label': 'Last 3 months', 'value': '90'},
+                                {'label': 'Last 6 months', 'value': '180'},
+                                {'label': 'Last 12 months', 'value': '365'},
+                                {'label': 'All Time', 'value': 'ALL'}
+                            ],
+                            value='ALL',  # Default value
+                            className='radio-items'
+                        ),
                         dcc.DatePickerRange(
                             id='date-picker-range',
                             display_format='DD/MM/YYYY',
@@ -217,58 +234,129 @@ def generate_dashboard(semesters_list):
                             max_date_allowed=(dt.now()-relativedelta(days=1)).date(),
                             initial_visible_month=dt.now(),
                             start_date=(dt.now()-relativedelta(months=6)).date(),
-                            clearable=True,
+                            clearable=False,
                             className="content-font",
                             style={'width': '100%', 'height': '50%', 'border-radius': '6px'}
-                        )
-                    ],
-                    style={"width": "100%", "height": "100%", "font-size": "14",
-                            "border-radius": '6px','align-items':'center', 
-                            'display':'stretch'}),
+                            )
+                        ]),
+                dbc.ModalFooter(
+                    dbc.Button(
+                        "Apply", id="close-date", className="ms-auto", n_clicks=0
+                    )
                 ),
+            ]
+    return modal_content
 
-            ],
-            #justify="evenly",
-            style={'margin': '0', "width": "100%", 'height': '4%', 'border-width': '5px', 'align-items': 'left'},
-            align='stretch'
+def get_course_modal():
+    modal_content = [
+            dbc.ModalHeader(dbc.ModalTitle("Filter Course Code")),
+            dbc.ModalBody([
+                    dbc.Input(
+                        id="search-input",
+                        placeholder="Course Code",
+                        className="input analytics-input content-font",
+                        type="text",
+                        maxLength=8,
+                        required=False,
+                        autocomplete='off',
+                        autofocus=True,
+                        style={'width': '100%', 'height': '100%', 'border-radius': '6px', 'border': '1px solid #000', 'padding': '10px', 'color':'#000'}
+                        )
+                    ]),
+            dbc.ModalFooter(
+                dbc.Button(
+                    "Apply", id="close-course", className="ms-auto", n_clicks=0
+                )
+            ),
+        ]
+    return modal_content
+
+def get_aggregate_modal():
+    modal_content = [
+                dbc.ModalHeader(dbc.ModalTitle("Aggregate Period:")),
+                dbc.ModalBody([
+                        dbc.RadioItems(
+                            id='aggregation-radio',
+                            options=[
+                                {'label': 'Hourly', 'value': 'H'},
+                                {'label': 'Daily', 'value': 'D'},
+                                {'label': 'Weekly', 'value': 'W'},
+                                {'label': 'Monthly', 'value': 'M'},
+                            ],
+                            value='D',  # Default value
+                            className='radio-items'
+                        ),
+                        ]),
+                dbc.ModalFooter(
+                    dbc.Button(
+                        "Apply", id="close-aggregate", className="ms-auto", n_clicks=0
+                    )
+                ),
+            ]
+    return modal_content
+
+def get_semester_modal(semesters_list):
+    modal_content = [
+                dbc.ModalHeader(dbc.ModalTitle("Choose Semester")),
+                dbc.ModalBody([
+                        dbc.Select(
+                            id='semester-select',
+                            options=semesters_list,
+                            value='NONE',  # Default value
+                            className='radio-items'
+                        ),
+                        html.Br(),
+                        dbc.Switch(
+                            id='semester-switch',
+                            label="Automatically change date range to view the chosen semester (e.g. Semester 1: March to July)",
+                            value=False,
+                        ),
+                        dbc.Label("Note: Date range options will be LOCKED if this is selected.")
+                        ]),
+                dbc.ModalFooter(
+                    dbc.Button(
+                        "Apply", id="close-semester", className="ms-auto", n_clicks=0
+                    )
+                ),
+            ]
+    return modal_content
+
+def generate_dashboard(semesters_list):
+    semesters_list["NONE"] = 'None'
+    return html.Div([
+        html.H3("Filters for the data:"),
+        html.Br(),
+        html.Div([
+            dbc.Button('Date: Last 3 months', id='date-btn', n_clicks=0, className="content-font", style={'margin-right': '10px',"border-radius": '10px', 'background-color':'#0D6DCD'}),
+            dbc.Button('Course: None', id='course-btn', n_clicks=0, className="content-font", style={'margin-right': '10px',"border-radius": '10px', 'background-color':'#0D6DCD'}),
+            dbc.Button('Aggregate: Daily', id='aggregate-btn', n_clicks=0, className="content-font", style={'margin-right': '10px',"border-radius": '10px', 'background-color':'#0D6DCD'}),
+            dbc.Button('Semester: None', id='semester-btn', n_clicks=0, className="content-font", style={'margin-right': '10px',"border-radius": '10px', 'background-color':'#0D6DCD'}),
+        ], className='date-selector', id='filter-div'),
+        dbc.Modal(
+            get_modal(),
+            id="modal",
+            is_open=False,
+            style={'border':'none'}
         ),
-        dbc.Row([
-            dbc.Col(
-                html.Div([
-                    dbc.Label("Time Range", className='content-font'),
-                    dbc.Select(
-                        id='time-range-select',
-                        options=generate_time_range_options(),
-                        value='12M',  # Default value
-                        className="content-font",
-                        style={'width': '100%', 'border-radius': '6px'}
-                    )
-                ]),
-                style={'padding-right': '10px'},
-                width=6,
-            ),
-            dbc.Col(
-                html.Div([
-                    dbc.Label("Aggregate by", className='content-font'),
-                    dbc.Select(
-                        id='aggregation-select',
-                        options=[
-                            {'label': 'Hour', 'value': 'H'},
-                            {'label': 'Day', 'value': 'D'},
-                            {'label': 'Week', 'value': 'W'},
-                        ],
-                        value='D',  # Default value
-                        className="content-font",
-                        style={'border-radius': '6px', 'height':'100%'}
-                    )
-                ]),
-                style={'padding-left': '10px', 'height':'100%'},
-                width=6,
-            ),
-        ],
-            style={'margin': '40px 0', "width": "66.66%", 'height': '4%', 'border-width': '5px', 'align-items': 'left'},
-            align='stretch'
-        ), 
+        dbc.Modal(
+            get_course_modal(),
+            id="modal-course",
+            is_open=False,
+            style={'border':'none'}
+        ),
+        dbc.Modal(
+            get_aggregate_modal(),
+            id="modal-aggregate",
+            is_open=False,
+            style={'border':'none'}
+        ),
+        dbc.Modal(
+            get_semester_modal(semesters_list),
+            id="modal-semester",
+            is_open=False,
+            style={'border':'none'}
+        ),
+        html.Br(),
         html.Div(id='dynamic-content'),        
         ], style={'width': '100%', 'height': '100vh', 'margin': '0px', 'padding': '40px', 'overflow': 'hidden',
                   'background-color': '#F4EAFF'},

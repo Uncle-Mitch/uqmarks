@@ -16,17 +16,21 @@ from flask_caching import Cache
 from datetime import datetime
 import plotly.express as px
 import dash
-from dash import Dash, dcc, html
+from dash import Dash, dcc, html, Input, Output, State, ctx
 from datetime import datetime as dt
 import dash_bootstrap_components as dbc
 from dateutil.relativedelta import relativedelta
 import ipaddress
 import socket
+from dotenv import load_dotenv
+from config import ENABLE_LOGGING, DEBUG_MODE
 
+
+load_dotenv()
 db = SQLAlchemy()
 DB_NAME = "course.sqlite"
 app = Flask(__name__)
-app.config['SECRET_KEY'] = '123'#os.environ['SECRET_KEY']
+app.config['SECRET_KEY'] = os.environ['SECRET_KEY']
 app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{DB_NAME}'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 THIS_FOLDER = Path(__file__).parent.resolve()
@@ -52,7 +56,6 @@ def dash_app():
 
         # Only allow the server (uqmarks.com) to access the dash page instead of everyone
         if ipaddress.ip_address(client_ip) == ipaddress.ip_address(host_ip):
-            # Allow access only if the referrer matches and IP is allowed
             return dash_app.index()
 
     return redirect('/')
@@ -93,7 +96,7 @@ def create_database(app):
 def get_semester_list():
     # check if we already cached a recent semester list (within 24 hrs)
     # if already cached, RETURN immediately.
-    if cache.get("semester_list"):
+    if cache.get("semester_list") is not None:
         return cache.get("semester_list")
     
     semesters = {}
@@ -128,12 +131,13 @@ def get_semester_list():
     # if current month is between december and february, then semester 3 is the current semester
     if (current_month >= 12) or (current_month <= 2) and latest_sem != 3:
         # should be the year that month 12 is in
-        if current_month == 12:
+        if current_month == 12 and latest_year == current_year:
             current_data.insert(0,{'year': current_year, 'semester': 3})
-        else:
+            updated = True
+        elif latest_year == (current_year - 1):
             current_data.insert(0,{'year': current_year-1, 'semester': 3})
-        updated = True
-    
+            updated = True
+        
     # add new data to semesters.json, else read from file
     if updated:
         with open(THIS_FOLDER / "semesters.json","w") as f:
@@ -157,16 +161,26 @@ def get_semester_list():
     cache.set("semester_list", semesters, timeout=60*60*24)
     return semesters
 
+def get_cached_df():
+    """
+    Dataframe for analytics is updated every 6 hours to reduce overhead in I/O operations
+    Returns:
+        pd.Dataframe: Current  dataframe of the search activity
+    """
+    if cache.get("analytics_df") is not None:
+        return cache.get("analytics_df")
+    
+    file_path = THIS_FOLDER / "logs/search_log.txt"
+    df = load_data(file_path)
+
+    cache.set("analytics_df", df, timeout=60*60*6)
+    return df
 
 @app.route('/', methods=['GET','POST'])
 def get_index():
     create_database(app=app)
     semesters = get_semester_list()
     return render_template('index.html', semesters=semesters)
-
-#@app.route('/<path:sem>', methods=['GET','POST'])
-#def redirect_sem_only(sem):
-#    return redirect('/')
 
 @app.route('/redirect', methods=['GET','POST'])
 def redirect_code():
@@ -189,6 +203,13 @@ def quiz():
 @app.route('/<path:sem>/<path:text>', methods=['GET','POST'])
 def all_routes(sem, text):
     semesters = get_semester_list()
+    if sem not in semesters:
+        return render_template('invalid.html', 
+                               code=text, 
+                               semesters=semesters,
+                               sem=sem,
+                               invalid_text="Choose an available semester.")
+    
     if len(text) == 8 and text[:4].isalpha() and text[4:].isnumeric():
         year, _, semester = sem.partition('S')
         try:
@@ -233,14 +254,25 @@ def show_analytics():
     return render_template('analytics.html', semesters=get_semester_list())
 
 @dash_app.callback(
-    dash.dependencies.Output('dynamic-content', 'children'),
-    [dash.dependencies.Input('date-picker-range', 'start_date'),
-     dash.dependencies.Input('date-picker-range', 'end_date'),
-     dash.dependencies.Input('search-input', 'value'),
-     dash.dependencies.Input('semester-select', 'value'),
-     dash.dependencies.Input('aggregation-select', 'value')]
+    Output('dynamic-content', 'children'),
+    Output('date-btn','children'),
+    Output('course-btn','children'),
+    Output('aggregate-btn','children'),
+    Output('semester-btn','children'),
+    [
+     Input('close-date', 'n_clicks'),
+     Input('close-course', 'n_clicks'),
+     Input('close-aggregate', 'n_clicks'),
+     Input('close-semester', 'n_clicks')
+    ],
+    [State('date-picker-range', 'start_date'),
+     State('date-picker-range', 'end_date'),
+     State('search-input', 'value'),
+     State('semester-select', 'value'),
+     State('aggregation-radio', 'value'),
+     State('semester-switch','value')]
 )
-def update_output(start_date, end_date, code, sem_text, interval):
+def update_output(date_clicks, course_clicks, aggregate_clicks, semester_clicks, start_date, end_date, code, sem_text, interval, sem_lock):
     config={
         'displayModeBar': False,
         'displaylogo': False,                                       
@@ -270,8 +302,6 @@ def update_output(start_date, end_date, code, sem_text, interval):
     # Define middle box style without rounded edges
     middle_box_style = {
         'background-color': '#5E35B1',
-        'border-left': '1px solid rgba(0, 0, 0, 0.9)',
-        'border-right': '1px solid rgba(0, 0, 0, 0.9)',
         'border-radius': '0',  # No rounded corners
     }
 
@@ -281,11 +311,11 @@ def update_output(start_date, end_date, code, sem_text, interval):
         'border-radius': '0 10px 10px 0',  # Rounded corners on the right box
     }
 
-    file_path = THIS_FOLDER / "logs/search_log.txt"
-    df = load_data(path=file_path, year=year, semester=semester, start_date=start_date, end_date=end_date)
+    df = get_cached_df()
+    df = filter_data(df, year=year, semester=semester, start_date=start_date, end_date=end_date)
     
-    fig1, df_daily = generate_plot(df, code, interval=interval)
-    fig2, df_frequency = plot_most_frequent_codes(df, code, interval=interval)
+    fig1, df_code_only = generate_plot(df, code, interval=interval)
+    fig2, df_frequency, ranking = plot_most_frequent_codes(df, code, interval=interval)
 
     # Calculate number of days in timeframe
     if end_date is None:
@@ -296,12 +326,18 @@ def update_output(start_date, end_date, code, sem_text, interval):
     analysis_start_date = datetime.strptime(start_date, '%Y-%m-%d').date()
     days_elapsed = (analysis_end_date - analysis_start_date).days
 
-    total_searches = len(df)
-    top_search_query = df_frequency.iloc[0]['code']
-    average_per_day = len(df) / days_elapsed
+    middle_box_text = "Most Searched Course"
+    middle_box_value = df_frequency.iloc[0]['code']
+    if ranking is not None:
+        middle_box_text = f"{code.upper()} ranking"
+        middle_box_value = f"#{ranking}"
+    
+    # Overview statistics
+    total_searches = len(df_code_only)
+    average_per_day = total_searches / days_elapsed
 
        
-    return html.Div([
+    content = html.Div([
         html.Div([
             # Total Number of Searches
             html.Div([
@@ -311,8 +347,8 @@ def update_output(start_date, end_date, code, sem_text, interval):
             ),
             # Top Search Query
             html.Div([
-                html.P(f"Most Searched Course", style={'margin': '0'}),
-                html.H3(f"{top_search_query}", style={'margin': '0'})],
+                html.P(f"{middle_box_text}", style={'margin': '0'}),
+                html.H3(f"{middle_box_value}", style={'margin': '0'})],
                 style={**box_style, **middle_box_style}
             ),
             # Average Per Day
@@ -334,27 +370,105 @@ def update_output(start_date, end_date, code, sem_text, interval):
         )
     ])
 
+    interval_text = {"D":"Daily", "H":"Hourly", "W":"Weekly", "M":"Monthly"}
+    semester_list = get_semester_list()
+    semester_list["NONE"] = "None"
+    if code is None or len(code) == 0:
+        code = "None"
+
+    # Updated labels for filter buttons
+    filter_content = [
+            'Date: Last 3 months',
+            f'Course: {code}',
+            f'Aggregate: {interval_text[interval]}',
+            f'Semester: {semester_list[sem_text]}',
+        ]
+    
+    if sem_lock:
+        filter_content[0] = "Date: LOCKED by Semester"
+    
+    return content, *filter_content
+
 @dash_app.callback(
-    dash.dependencies.Output('date-picker-range', 'start_date'),
-    dash.dependencies.Input('time-range-select', 'value')
+    Output('date-picker-range', 'start_date'),
+    Input('date-range-radio', 'value')
 )
 def update_date_picker(start_range):
     match start_range:
-        case "1M":
-            start_date = dt.now() - relativedelta(months=1)
-        case '3M':
-            start_date = dt.now() - relativedelta(months=3)
-        case '6M':
-            start_date = dt.now() - relativedelta(months=6)
-        case '12M':
-            start_date = dt.now() - relativedelta(months=12)
-        case _:
-            start_date = None  # Default to all time
-            return start_date
+        case "ALL":
+            start_date = dt(2023, 2, 1)
+        case "30":
+            start_date = dt.now() - relativedelta(days=30)
+        case '90':
+            start_date = dt.now() - relativedelta(days=90)
+        case '180':
+            start_date = dt.now() - relativedelta(days=180)
+        case '365' | _:
+            start_date = dt.now() - relativedelta(days=365)
+    # Remove the time portion of datetime object
     start_date = start_date.date()
     return start_date
 
+@dash_app.callback(
+    Output("modal", "is_open"),
+    [Input("date-btn", "n_clicks"), 
+     Input("close-date", "n_clicks")],
+    [State("modal", "is_open")],
+)
+def toggle_date_modal(n1, n2, is_open):
+    if n1 or n2:
+        return not is_open
+    return is_open
 
+@dash_app.callback(
+    Output("modal-course", "is_open"),
+    [Input("course-btn", "n_clicks"), 
+     Input("close-course", "n_clicks")],
+    [State("modal-course", "is_open")],
+)
+def toggle_course_modal(n1, n2, is_open):
+    if n1 or n2:
+        return not is_open
+    return is_open
+
+@dash_app.callback(
+    Output("modal-aggregate", "is_open"),
+    [Input("aggregate-btn", "n_clicks"), 
+     Input("close-aggregate", "n_clicks")],
+    [State("modal-aggregate", "is_open")],
+)
+def toggle_aggregate_modal(n1, n2, is_open):
+    if n1 or n2:
+        return not is_open
+    return is_open
+
+@dash_app.callback(
+    Output("modal-semester", "is_open"),
+    [Input("semester-btn", "n_clicks"), 
+     Input("close-semester", "n_clicks")],
+    [State("modal-semester", "is_open")],
+)
+def toggle_semester_modal(n1, n2, is_open):
+    if n1 or n2:
+        return not is_open
+    return is_open
+
+@dash_app.callback(
+    Output('close-course', 'n_clicks'),
+    Input('search-input', 'n_submit')
+)
+def press_enter_to_click(n_submit):
+    return n_submit
+
+@dash_app.callback(
+    Output('date-btn', 'disabled'),
+    [Input('semester-switch','value'),
+    Input('date-range-radio', 'value')]
+)
+def disable_semester(semester_lock, date_selection):
+    if semester_lock:
+        return True
+    return False
 
 def start_app():
     get_semester_list()
