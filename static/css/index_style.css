@@ -63,6 +63,11 @@ body {
   padding-right: 20%;
 }
 
+.analytics-body-align {
+  padding-left: 10%;
+  padding-right: 10%;
+}
+
 .columns {
   padding-left: 9%;
   padding-right: 9%;
@@ -94,6 +99,13 @@ body {
   }
 
   .body-align {
+    padding-left: 0% !important;
+    padding-right: 0% !important;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .analytics-body-align {
     padding-left: 0% !important;
     padding-right: 0% !important;
     margin-left: auto;
@@ -251,4 +263,8 @@ th {
   color: rgb(255,255,255) !important;
   font-family: contentFont;
   letter-spacing: 0.05em;
+}
+
+.filter-btn {
+  background-color: #4285F4 !important;
 }
