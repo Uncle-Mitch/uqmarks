@@ -17,7 +17,7 @@ class CourseNotFoundError(Exception):
 class WrongSemesterError(Exception):
     def __init__(self, course: str, sem: str):
         self.message = f"The course '{course}' does not exist in the selected semester. (Semester {sem})"
-        if sem == 3:
+        if sem == "3":
             self.message = f"The course '{course}' does not exist in the summer semester."
         super().__init__(self.message)
 
