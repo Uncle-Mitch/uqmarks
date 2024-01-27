@@ -92,7 +92,6 @@ body {
   border-width: 5px;
 }
 
-
 @media only screen and (max-width: 768px) {
   table{
     width: 90% !important;
@@ -160,6 +159,10 @@ div {
   text-align: center;
 }
 
+.rounded-corner {
+  border-radius: 6px;
+}
+
 .score-input{
   background-color: #F4EAFF;
   border-style: solid;
@@ -183,10 +186,11 @@ div {
 
 .dash-iframe {
   width: 100%;
-  height: 150vh;
+  height: 70vh;
   border: none; /* Remove border if not needed */
   overflow: hidden;
-  border-radius: 6px;
+  margin: 0;
+  padding: 0;
 }
 
 .dash-input {
@@ -267,4 +271,14 @@ th {
 
 .filter-btn {
   background-color: #4285F4 !important;
+}
+
+.tabs {
+  margin-bottom: 0px !important;
+}
+
+
+#analytics-iframe {
+  padding: 0;
+  margin-bottom: -10px;
 }
