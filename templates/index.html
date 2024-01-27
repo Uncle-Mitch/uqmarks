@@ -84,7 +84,7 @@
                   <div class="select is-medium is-fullwidth content-font">
                     <select name='Semester'>
                       {% for sem_code, sem_text in semesters.items() %}
-                        <option value="{{sem_code}}" {% if sem == sem_code %} selected {% endif %}>{{sem_text}}</option>
+                        <option value="{{sem_code}}" {%if sem == sem_code %} selected {% endif %}>{{sem_text}}</option>
                       {% endfor %}
                     </select>
                   </div>

@@ -58,7 +58,6 @@
     </div>
   </nav>
   <body>
-
     <section class="hero purp-bg body-align">
       <div class="hero-body">
         <h1 class="title text-light-purp is-size-1">
@@ -68,10 +67,17 @@
       </div>
     </section>
     <section class="section purp-bg analytics-body-align dash-body" id='section-main'>
-      <div class="container content-is-large">
-        <div class="dash-container">
-          <iframe class='figure dash-iframe' src="/dash" onload="resizeIframe(this)"></iframe>  
+      <div class="container content-is-large white-bg rounded-corner", id="analytics-body">
+        <div class="tabs">
+          <ul style="padding-left: 40px; padding-right: 40px">
+            <li {% if page == "home" %}class="is-active"{% endif %}><a href="/analytics" class="content-font">Total Searches</a></li>
+            <li {% if page == "courses" %}class="is-active"{% endif %}><a href="/analytics/courses" class="content-font">Course Ranking</a></li>
+            <li {% if page == "hourly" %}class="is-active"{% endif %}><a href="/analytics/hourly" class="content-font">Hourly Usage</a></li>
+          </ul>
         </div>
+        <div class='dash-cotainer'>
+          <iframe class='figure dash-iframe' id="analytics-iframe" src="/dash/{{page}}" onload="resizeIframe(this)"></iframe>  
+        </div>  
       </div>
     </section>
   </body>
