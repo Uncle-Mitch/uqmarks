@@ -43,6 +43,7 @@ class Course(db.Model):
 db.init_app(app)
 dash_app = create_dash_app(app)
 
+@app.route('/dash', methods=['GET'])
 @app.route('/dash/', methods=['GET'])
 @app.route('/dash/home', methods=['GET'])
 @app.route('/dash/courses', methods=['GET'])
@@ -53,11 +54,9 @@ def redirect_dash():
     """
     if request.referrer is not None and request.referrer.startswith(request.host_url):
         client_ip = request.remote_addr
-        hostname = request.url_root.split('://')[1].split(':')[0]  # Extracting the hostname
-        host_ip = socket.gethostbyname(hostname)
 
         # Only allow the server (uqmarks.com) to @access the dash page instead of everyone
-        if ipaddress.ip_address(client_ip) == ipaddress.ip_address(host_ip):
+        if ipaddress.ip_address(client_ip).is_private:
             return dash_app.index()
 
     return redirect('/')
