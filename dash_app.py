@@ -61,6 +61,65 @@ def get_date_str(date_range, start_date, end_date):
             date_time = f"{formatted_start} - {formatted_end}"
     return date_time
 
+
+def get_start_date(start_range:str, current_start_date:str):
+    """Returns the start date based on the radio button selected (start_range)
+
+    Args:
+        start_range (str): Radio button selected in date range picker
+        current_start_date (str): The current start date in format '%Y-%m-%d'
+
+    Returns:
+        date: The start date based on the radio button selection.
+    """
+    match start_range:
+        case "ALL":
+            start_date = dt(2023, 2, 1)
+        case "30":
+            start_date = dt.now() - relativedelta(days=30)
+        case "90":
+            start_date = dt.now() - relativedelta(days=90)
+        case "180":
+            start_date = dt.now() - relativedelta(days=180)
+        case "365":
+            start_date = dt.now() - relativedelta(days=365)
+        case "CUSTOM" | _:
+            return current_start_date
+    # Remove the time portion of datetime object
+    start_date = start_date.date()
+    return start_date
+
+def get_semester_dates(semester:int, year:int):
+    start_date, end_date = None, None
+    match semester:
+        case 1:
+            start_date = datetime(year, 3, 1) # 1st March 
+            end_date = datetime(year, 7, 10) # 10 July
+        case 2:
+            start_date = datetime(year, 7, 1) # 1st July 
+            end_date = datetime(year, 12, 10) # 10 December
+        case 3:
+            start_date = datetime(year, 12, 1) # 1st of December
+            end_date = datetime(year+1, 2, 28) # 28 Feb
+
+
+    return start_date.date(), end_date.date()
+
+def get_start_and_end_dates(start_date:str, end_date:str, semester, year, sem_lock, date_range):
+
+    start_date = datetime.strptime(start_date, '%Y-%m-%d').date()
+    end_date = datetime.strptime(end_date, '%Y-%m-%d').date()
+    
+    if sem_lock:
+        new_start_date, end_date = get_semester_dates(semester, year)
+    else:
+        new_start_date = get_start_date(date_range, start_date)
+    
+    new_start_date_str = new_start_date.strftime('%Y-%m-%d')
+    end_date_str = end_date.strftime('%Y-%m-%d')
+
+    return new_start_date, new_start_date_str, end_date, end_date_str
+
 def create_home_callbacks(dash_app):
     @dash_app.callback(
         [
@@ -68,24 +127,25 @@ def create_home_callbacks(dash_app):
         Output('home-date-btn','children'),
         Output('home-course-btn','children'),
         Output('home-aggregate-btn','children'),
-        Output('home-semester-btn','children')
+        Output('home-semester-btn','children'),
+        Output('home-date-picker-range', 'start_date')
         ],
         [
+        Input('home-date-range-radio', 'value'),
         Input('home-close-date', 'n_clicks'),
         Input('home-close-course', 'n_clicks'),
-        Input('home-close-aggregate', 'n_clicks'),
+        Input('home-aggregation-radio', 'value'),
         Input('home-close-semester', 'n_clicks')
         ],
         [
         State('home-date-picker-range', 'start_date'),
         State('home-date-picker-range', 'end_date'),
-        State('home-date-range-radio', 'value'),
         State('home-search-input', 'value'),
         State('home-semester-select', 'value'),
         State('home-aggregation-radio', 'value'),
         State('home-semester-switch','value')],
     )
-    def update_output(date_clicks, course_clicks, aggregate_clicks, semester_clicks, start_date, end_date, date_range, code, sem_text, interval, sem_lock):
+    def update_output(date_range, date_clicks, course_clicks, aggregate_clicks, semester_clicks, start_date, end_date, code, sem_text, interval, sem_lock):
         config={
             'displayModeBar': False,
             'displaylogo': False,                                       
@@ -97,8 +157,12 @@ def create_home_callbacks(dash_app):
             year = int(year)
             semester = int(semester)
 
+        new_start_date, new_start_date_str, end_date, end_date_str = get_start_and_end_dates(start_date, end_date,
+                                                                                              semester, year, sem_lock,
+                                                                                              date_range)
+
         df = get_cached_df()
-        df = filter_data(df, year=year, semester=semester, start_date=start_date, end_date=end_date)
+        df = filter_data(df, year=year, semester=semester, start_date=new_start_date_str, end_date=end_date_str)
         
         fig1, df_code_only = generate_plot(df.copy(), code, interval=interval)
         fig2, df_frequency, ranking = plot_most_frequent_codes(df.copy(), code, interval=interval)
@@ -107,10 +171,9 @@ def create_home_callbacks(dash_app):
         if end_date is None:
             analysis_end_date = datetime.now().date()
         else:
-            analysis_end_date = datetime.strptime(end_date, '%Y-%m-%d').date()
+            analysis_end_date = end_date
 
-        analysis_start_date = datetime.strptime(start_date, '%Y-%m-%d').date()
-        days_elapsed = (analysis_end_date - analysis_start_date).days
+        days_elapsed = (analysis_end_date - new_start_date).days
 
         box_style, left_box_style, middle_box_style, right_box_style = get_box_styles()
 
@@ -160,7 +223,7 @@ def create_home_callbacks(dash_app):
 
         # Updated labels for filter buttons
         filter_content = [
-                f'Date: {get_date_str(date_range, start_date, end_date)}',
+                f'Date: {get_date_str(date_range, new_start_date_str, end_date_str)}',
                 f'Course: {code}',
                 f'Aggregate: {interval_text[interval]}',
                 f'Semester: {semester_list[sem_text]}',
@@ -169,7 +232,7 @@ def create_home_callbacks(dash_app):
         if sem_lock:
             filter_content[0] = "Date: LOCKED by Semester"
         
-        return content, *filter_content
+        return content, *filter_content, new_start_date
     
 def create_courses_callbacks(dash_app):
     @dash_app.callback(
@@ -177,22 +240,23 @@ def create_courses_callbacks(dash_app):
         Output('course-dynamic-content', 'children'),
         Output('course-date-btn','children'),
         Output('course-course-btn','children'),
-        Output('course-semester-btn','children')
+        Output('course-semester-btn','children'),
+        Output('course-date-picker-range', 'start_date')
         ],
         [
+        Input('course-date-range-radio', 'value'),
         Input('course-close-date', 'n_clicks'),
         Input('course-close-course', 'n_clicks'),
         Input('course-close-semester', 'n_clicks')
         ],
         [
-        State('course-date-picker-range', 'start_date'),
+        State('course-date-picker-range', 'start_date'),    
         State('course-date-picker-range', 'end_date'),
-        State('course-date-range-radio', 'value'),
         State('course-search-input', 'value'),
         State('course-semester-select', 'value'),
         State('course-semester-switch','value')],
     )
-    def update_course_output(date_clicks, course_clicks, semester_clicks, start_date, end_date, date_range, code, sem_text, sem_lock):
+    def update_course_output(date_range, date_clicks, course_clicks, semester_clicks, start_date, end_date, code, sem_text, sem_lock):
         config={
             'displayModeBar': False,
             'displaylogo': False,                                       
@@ -203,9 +267,13 @@ def create_courses_callbacks(dash_app):
             year, _, semester = sem_text.partition('S')
             year = int(year)
             semester = int(semester)
+        
+        new_start_date, new_start_date_str, end_date, end_date_str = get_start_and_end_dates(start_date, end_date,
+                                                                                              semester, year, sem_lock,
+                                                                                              date_range)
 
         df = get_cached_df()
-        df = filter_data(df, year=year, semester=semester, start_date=start_date, end_date=end_date)
+        df = filter_data(df, year=year, semester=semester, start_date=new_start_date_str, end_date=end_date_str)
         
         fig2, df_frequency, ranking = plot_most_frequent_codes(df.copy(), code)
 
@@ -252,7 +320,7 @@ def create_courses_callbacks(dash_app):
 
         # Updated labels for filter buttons
         filter_content = [
-                f'Date: {get_date_str(date_range, start_date, end_date)}',
+                f'Date: {get_date_str(date_range, new_start_date_str, end_date_str)}',
                 f'Course: {code}',
                 f'Semester: {semester_list[sem_text]}',
             ]
@@ -260,7 +328,7 @@ def create_courses_callbacks(dash_app):
         if sem_lock:
             filter_content[0] = "Date: LOCKED by Semester"
         
-        return content, *filter_content
+        return content, *filter_content, new_start_date
     
 def create_hourly_callbacks(dash_app):
     @dash_app.callback(
@@ -268,19 +336,20 @@ def create_hourly_callbacks(dash_app):
         Output('hourly-dynamic-content', 'children'),
         Output('hourly-date-btn','children'),
         Output('hourly-semester-btn','children'),
+        Output('hourly-date-picker-range', 'start_date')
         ],
         [
-        Input('hourly-close-semester', 'n_clicks'),
         Input('hourly-close-date', 'n_clicks'),
+        Input('hourly-close-semester', 'n_clicks'),
+        Input('hourly-date-range-radio', 'value'),
         ],
         [
         State('hourly-date-picker-range', 'start_date'),
         State('hourly-date-picker-range', 'end_date'),
-        State('hourly-date-range-radio', 'value'),
         State('hourly-semester-select', 'value'),
         State('hourly-semester-switch','value')],
     )
-    def update_hourly_output(semester_clicks, date_clicks, start_date, end_date, date_range, sem_text, sem_lock):
+    def update_hourly_output(date_clicks, semester_clicks, date_range, start_date, end_date, sem_text, sem_lock):
         config={
             'displayModeBar': False,
             'displaylogo': False,                                       
@@ -292,8 +361,12 @@ def create_hourly_callbacks(dash_app):
             year = int(year)
             semester = int(semester)
 
+        new_start_date, new_start_date_str, end_date, end_date_str = get_start_and_end_dates(start_date, end_date,
+                                                                                              semester, year, sem_lock,
+                                                                                              date_range)
+
         df = get_cached_df()
-        df = filter_data(df, year=year, semester=semester, start_date=start_date, end_date=end_date)
+        df = filter_data(df, year=year, semester=semester, start_date=new_start_date_str, end_date=end_date_str)
         
         fig = gen_hourly_heatmap(df.copy())
     
@@ -308,7 +381,7 @@ def create_hourly_callbacks(dash_app):
         semester_list = get_semester_list()
         semester_list["NONE"] = "None"
 
-        date_time = get_date_str(date_range, start_date, end_date)
+        date_time = get_date_str(date_range, new_start_date_str, end_date_str)
         
         filter_content = [
                 f'Date: {date_time}',
@@ -318,7 +391,7 @@ def create_hourly_callbacks(dash_app):
         if sem_lock:
             filter_content[0] = "Date: LOCKED by Semester"
         
-        return content, *filter_content
+        return content, *filter_content, new_start_date
     
 def create_general_callbacks(dash_app, page):
         @dash_app.callback(
@@ -382,37 +455,17 @@ def create_general_callbacks(dash_app, page):
             if semester_lock:
                 return True
             return False
-        
-        @dash_app.callback(
-            Output(f'{page}date-picker-range', 'start_date'),
-            Input(f'{page}date-range-radio', 'value'),
-            State(f'{page}date-picker-range', 'start_date')
-        )
-        def update_date_picker(start_range, current_start_date):
-            match start_range:
-                case "ALL":
-                    start_date = dt(2023, 2, 1)
-                case "30":
-                    start_date = dt.now() - relativedelta(days=30)
-                case '90':
-                    start_date = dt.now() - relativedelta(days=90)
-                case '180':
-                    start_date = dt.now() - relativedelta(days=180)
-                case '365':
-                    start_date = dt.now() - relativedelta(days=365)
-                case "CUSTOM" | _:
-                    start_date = datetime.strptime(current_start_date, '%Y-%m-%d')
-            # Remove the time portion of datetime object
-            start_date = start_date.date()
-            return start_date
-    
+         
 
 def create_dash_app(server):
     dash_app = Dash(__name__, server=server, url_base_pathname='/dash/', suppress_callback_exceptions=False,
                     external_stylesheets=[dbc.themes.BOOTSTRAP],
                     use_pages=True,
                     pages_folder="dash_pages",
-                    prevent_initial_callbacks="initial_duplicate")
+                    prevent_initial_callbacks="initial_duplicate",
+                    meta_tags=[
+                        {"name": "viewport", "content": "width=device-width, initial-scale=1"}
+                    ])
 
     create_home_callbacks(dash_app)
     create_courses_callbacks(dash_app)
