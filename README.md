@@ -13,3 +13,22 @@ Developed with the **Flask Framework (Python)** and **SQLite**.
 
 Inspired by [uqfinal](https://uqfinal.com/). 
 
+### Installation
+1. (Optional) Create a discord channel (or two) for logging. 
+   - One for error logs, one for normal.
+2. Create a `.env` file in the root directory with the following variables:
+```
+SECRET_KEY - secret key for Flask
+LOG_LINK - Discord webhook link for normal logging
+ERROR_LOG_LINK - Discord webhook link for error logging
+MANAGER_ID - a Discord User ID (18 digit number) for error logs. The message will mention the user. (e.g. <@[ID]>)
+```
+
+### Starting The App:
+**Note the application is written and hosted in Python 3.10. It must be run in 3.10+**
+1. Change settings in `config.py` as necessary
+   - DEBUG_MODE - Set to True if you want Flask to run in debug mode.
+   - ENABLE_LOGGING - Set to True if you want to send logging requests
+      - If false, LOG_LINK and ERROR_LOG_LINK env variables won't matter.
+
+2. Run `app.py`
