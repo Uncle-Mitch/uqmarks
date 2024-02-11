@@ -22,6 +22,8 @@ SECRET_KEY - secret key for Flask
 LOG_LINK - Discord webhook link for normal logging
 ERROR_LOG_LINK - Discord webhook link for error logging
 MANAGER_ID - a Discord User ID (18 digit number) for error logs. The message will mention the user. (e.g. <@[ID]>)
+DEBUG_MODE - T/F , if you want to run Flask in DEBUG mode
+ENABLE_LOGGING - T/F , if you want to enable logging of operations
 ```
 
 ### Starting The App:
