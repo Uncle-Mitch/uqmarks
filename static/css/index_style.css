@@ -184,13 +184,18 @@ div {
   min-height: 200px; /* Set the minimum height */
 }
 
-.dash-iframe {
+#analytics-iframe {
   width: 100%;
   height: 70vh;
-  border: none; /* Remove border if not needed */
-  overflow: hidden;
+  border: none;
   margin: 0;
   padding: 0;
+  display: flex;
+  background-color: transparent;
+}
+
+.dash-container{
+  height: 100%;
 }
 
 .dash-input {
