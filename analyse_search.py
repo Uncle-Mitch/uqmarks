@@ -290,14 +290,6 @@ def gen_hourly_heatmap(df, code=None):
 
     return fig
 
-def generate_time_range_options():
-    return [
-        {'label': 'Last 1 month', 'value': '1M'},
-        {'label': 'Last 3 months', 'value': '3M'},
-        {'label': 'Last 6 months', 'value': '6M'},
-        {'label': 'Last 12 months', 'value': '12M'},
-        {'label': 'Custom', 'value': 'CUSTOM'}
-    ]
 
 def get_modal(page):
     modal_content = [
@@ -322,7 +314,7 @@ def get_modal(page):
                             min_date_allowed=dt(2023, 2, 1),
                             max_date_allowed=(dt.now()-relativedelta(days=1)).date(),
                             initial_visible_month=dt.now(),
-                            start_date=dt(2023, 2, 1), # All time hardcoded
+                            start_date=dt(2023, 2, 1).date(), # All time hardcoded
                             end_date=dt.now().date(),
                             clearable=False,
                             className="content-font",
