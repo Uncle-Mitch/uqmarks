@@ -135,19 +135,9 @@ def plot_most_frequent_codes(df:pd.DataFrame, highlight_code:str, interval="D"):
 
     #FF9999
     #48206C
-    index = 0
-    colors = ["#8299FF", "#83C135", "#ECA11B", "#2AA170", "#F37EC0", "#F2C428", "#40B3D8", "#8E8CFF", "#EB5DA6", "#39CFC2"]
-    markers = []
-    """
-    for code in fig["data"][0]["x"]:
-        if highlight_code and code == highlight_code.upper():
-            markers.append("#FF9999")
-        else:
-            markers.append(colors[index])
-            index += 1
-    """
-    fig.update_traces(marker_color=["#FF9999" if highlight_code and code == highlight_code.upper()
-                                     else "#0D6DCD" for index, code in enumerate(df['code'])])
+    # :8 for codes outside of top 10 as they have #XX appended to the end.
+    fig.update_traces(marker_color=["#FF9999" if highlight_code and code[:8] == highlight_code.upper()
+                                    else "#0D6DCD" for code in df['code']])
 
     fig.update_layout({
         'plot_bgcolor': 'rgba(0,0,0,0)',
