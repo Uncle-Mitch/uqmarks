@@ -70,13 +70,18 @@
       <div class="container content-is-large white-bg rounded-corner", id="analytics-body">
         <div class="tabs">
           <ul style="padding-left: 40px; padding-right: 40px">
-            <li {% if page == "home" %}class="is-active"{% endif %}><a href="/analytics" class="content-font">Total Searches</a></li>
-            <li {% if page == "courses" %}class="is-active"{% endif %}><a href="/analytics/courses" class="content-font">Course Ranking</a></li>
-            <li {% if page == "hourly" %}class="is-active"{% endif %}><a href="/analytics/hourly" class="content-font">Hourly Usage</a></li>
+            <li {% if page == "home" %}class="is-active"{% endif %}><a href="/analytics" class="content-font {% if page == "home" %}has-text-weight-bold{% endif %}">Total Searches</a></li>
+            <li {% if page == "courses" %}class="is-active"{% endif %}><a href="/analytics/courses" class="content-font {% if page == "courses" %}has-text-weight-bold{% endif %}">Course Ranking</a></li>
+            <li {% if page == "hourly" %}class="is-active"{% endif %}><a href="/analytics/hourly" class="content-font {% if page == "hourly" %}has-text-weight-bold{% endif %}">Hourly Usage</a></li>
           </ul>
         </div>
-        <div class='dash-cotainer'>
-          <iframe class='figure dash-iframe' id="analytics-iframe" src="/dash/{{page}}" onload="resizeIframe(this)"></iframe>  
+        <div class='dash-container' id="dash-container">
+          <div id="spinner">
+            <div>
+                <progress class="progress is-small is-info" max="100">15%</progress> 
+            </div>
+          </div>
+          <iframe class='figure dash-iframe' id="analytics-iframe" src="/dash/{{page}}"></iframe>  
         </div>  
       </div>
     </section>
