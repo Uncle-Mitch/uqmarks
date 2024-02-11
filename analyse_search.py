@@ -467,7 +467,7 @@ def generate_dashboard(semesters_list, page=""):
             style={'border':'none'}
         ),
         html.Br(),\
-        html.Div(id=f'{page}dynamic-content')       
+        dbc.Spinner(html.Div(id=f'{page}dynamic-content'), color='#48206C')  
         ], style={'width': '100%', 'height': '100vh', 'margin': '0px', 'padding-left': '40px', 'padding-right': '40px','overflow': 'hidden',
                   'background-color': '#F4EAFF', 'padding-top': '20px'},
         className='justify-align plot-container')
