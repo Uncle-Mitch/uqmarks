@@ -179,8 +179,8 @@ def show_analytics_hourly():
 
 def start_app():
     create_database(app=app)
-    app.config['ENABLE_LOGGING'] = ENABLE_LOGGING 
-    app.run(debug=DEBUG_MODE)
+    app.config['ENABLE_LOGGING'] = os.environ['ENABLE_LOGGING']
+    app.run(debug=os.environ['DEBUG_MODE'])
 
 
 if __name__== '__main__':
