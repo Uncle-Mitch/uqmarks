@@ -180,7 +180,7 @@ def generate_plot(df:pd.DataFrame, code:str, interval="D"):
         code = code.upper()
         df = search_data(df, code)
 
-    df['timestamp'] = pd.to_datetime(df['timestamp'], unit='s')
+    df.loc[:, 'timestamp'] = pd.to_datetime(df['timestamp'], unit='s')
 
     df_daily = group_data(df, interval).to_frame().reset_index()
     df_daily.columns = ['timestamp', 'count']
