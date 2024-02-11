@@ -16,7 +16,6 @@ from datetime import datetime
 import ipaddress
 import socket
 from dotenv import load_dotenv
-from config import ENABLE_LOGGING, DEBUG_MODE
 from flask_cache import cache, get_semester_list, get_cached_df
 from dash_app import create_dash_app
 
@@ -28,6 +27,8 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ['SECRET_KEY']
 app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{DB_NAME}'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['ENABLE_LOGGING'] = True if os.environ.get('ENABLE_LOGGING') == "T" else False
+DEBUG_MODE = True if os.environ['DEBUG_MODE'] == "T" else False
 THIS_FOLDER = Path(__file__).parent.resolve()
 
 cache.init_app(app)
@@ -178,8 +179,6 @@ def show_analytics_hourly():
 
 def start_app():
     create_database(app=app)
-    app.config['ENABLE_LOGGING'] = True if os.environ.get('ENABLE_LOGGING') == "T" else False
-    DEBUG_MODE = True if os.environ['DEBUG_MODE'] == "T" else False
     app.run(debug=DEBUG_MODE)
 
 
