@@ -87,5 +87,5 @@ def get_cached_df():
     file_path = THIS_FOLDER / "logs/search_log.txt"
     df = load_data(file_path)
 
-    cache.set("analytics_df", df, timeout=60*60*6)
+    cache.set("analytics_df", df, timeout=60*60*6) # Cached once every 6 hours
     return df
