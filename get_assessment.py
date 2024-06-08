@@ -74,8 +74,19 @@ def get_table(section_code):
 
     # Edge case where weight = 0% and UQ left the weight 'blank'
     df = df.dropna()
-    df.loc[df['Weighting'].str.contains("%"), ['Weighting']] = df['Weighting'].str.partition('%')[0]  + "%"
+    df['Weighting'] = df['Weighting'].astype(str)
+    
+    # Edge Case: Identify rows where Weighting does not contain "%" (e.g. DECO2200, DECO7200)
+    non_percentage_rows = df.loc[~df['Weighting'].str.contains("%"), 'Weighting']
+    
+    # If all entries are numeric and equal, convert them to percentages
+    if len(non_percentage_rows) > 0 and non_percentage_rows.apply(lambda x: x.isdigit()).all():
+        total_tasks = len(non_percentage_rows)
+        percentage = 100 / total_tasks
+        df.loc[~df['Weighting'].str.contains("%"), 'Weighting'] = f"{percentage:.2f}%"
 
+    # Convert weightings to the appropriate format.
+    df.loc[df['Weighting'].str.contains("%"), ['Weighting']] = df['Weighting'].str.partition('%')[0]  + "%"
     # Remove breaklines and extra "change as desired" message
     df.loc[df['Assessment Task'].str.contains("||"), ['Assessment Task']] = df['Assessment Task'].str.partition('||')[0]
     return list(df.itertuples(index=False, name=None))
