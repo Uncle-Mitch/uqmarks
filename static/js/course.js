@@ -2,7 +2,7 @@ const scores = document.getElementsByName("score");
 
 function calculate(){
   let total_score = 0.00
-  let undecided = 0.00
+  let decided = 0.00
   for (let i = 0; i < scores.length; i++) {
     let weight = parseFloat((scores[i].dataset.weight))
     if (scores[i].disabled === false) {
@@ -50,12 +50,14 @@ function calculate(){
           scores[i].value = score  + "%"
         }
         total_score += score*(weight/100);
-      } else if (scores[i].disabled === false) {
-        undecided += weight/100
-      }
+        decided += weight/100;
+      } 
    }
   }
 
+  // Cap required calculated score to be 100 marks maximum. (e.g. cannot be 1/101 required)
+  // Useful for courses with optional marks / best out of X quizes.
+  let undecided = Math.max(1-decided, 0); 
 
 
 
