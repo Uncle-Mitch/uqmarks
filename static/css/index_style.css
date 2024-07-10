@@ -47,6 +47,7 @@
 
 .content-font {
   font-family: contentFont;
+  letter-spacing: 0.05em;
 }
 
 .title-font {
@@ -108,12 +109,20 @@ p.is-warning-msg {
   border-width: 5px;
 }
 
+p.is-danger {
+  color: #FBE0E5;
+}
+
 #analytics-mobile-block {
   display: none;
 }
 
 @media only screen and (max-width: 768px) {
   table{
+    width: 90% !important;
+  }
+
+  .warning-msg{
     width: 90% !important;
   }
 
