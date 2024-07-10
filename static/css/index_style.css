@@ -73,6 +73,18 @@ body {
   padding-right: 9%;
 }
 
+.warning-msg {
+  width: 82%;
+}
+.is-warning-msg{
+  background-color: #FFD700;
+}
+
+p.is-warning-msg {
+  color: #000;
+  letter-spacing: 0.05em !important;
+}
+
 .hero{
   color: rgb(255,255,255);
   padding-top: 50px;
@@ -173,6 +185,7 @@ div {
   border-radius: 6px;
   background-color:#F4EAFF;
   text-align: center;
+  width: 82%;
 }
 
 .rounded-corner {
@@ -185,6 +198,13 @@ div {
   border-radius: 6px;
   border-color: #000;
   font-size: 16px;
+}
+
+.score-input:disabled {
+  background-color: #A9A9A9; /* Light grey background */
+  border-color: #000;
+  color: #6c757d; /* Grey text color */
+  cursor: not-allowed; /* Change cursor to indicate disabled state */
 }
 
 .figure {
@@ -303,4 +323,30 @@ th {
 #analytics-iframe {
   padding: 0;
   margin-bottom: -10px;
+}
+
+.switch-div {
+  align-items: center;
+  justify-content: center;
+}
+
+
+/* Icon on left, Text is centered for warnings*/
+#invalid-weight-warning {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-radius: 6px;
+}
+
+#invalid-weight-warning .fas {
+  margin-right: 10px;
+  color: #000000;
+}
+
+#invalid-weight-warning p {
+  flex-grow: 1;
+  margin: 0;
+  text-align: center;
+  font-weight: bold;
 }
