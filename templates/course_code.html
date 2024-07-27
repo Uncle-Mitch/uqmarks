@@ -14,6 +14,8 @@
     <link rel="icon" type="image/png" sizes="512x512" href="{{ url_for('static', filename='images/android-chrome-512x512.png') }}">
     <link rel="preload" href="{{url_for('static', filename='fonts//RedHatDisplay-Regular.ttf')}}" as="font">
     <link rel="preload" href="{{url_for('static', filename='fonts///Sato-Medium.ttf')}}" as="font">
+    <link rel="stylesheet" href="{{url_for('static', filename='css/bulma-switch-main.css')}}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <meta name="robots" content="noindex">
         <meta property='og:title'  content='UQ Grade Calculator'>
     <meta property='og:url'  content='https://www.uqmarks.com/'>
@@ -105,27 +107,41 @@
         </div>
       </div>
         <div class="container" id="tblresults">
-          <table class="table" style="width: 82%">
+          <table class="table">
             <colgroup>
               <col span="1" style="width: 50%;">
+              <col span="1" style="width: 20%;">
               <col span="1" style="width: 25%;">
-              <col span="1" style="width: 25%;">
+              <col span="1" style="width: 5%;">
             </colgroup>
             <thead>
               <th>Assessment</th>
               <th>Weight</th>
               <th>Your Score</th>
+              <th></th>
             </thead>
             {% for name, weight in assessment_list %}
             <tr>
                 <td>{{ name }}</td>
                 <td>{{ weight }}</td>
                 <td><input onchange="calculate()" data-weight={{weight}} name="score" class="input score-input" type="text" placeholder="90, 90% or 9/10" style="width: 100%;"></td>
+                <td>
+                  <label class="switch is-rounded is-medium">
+                    <input name="score-switch" type="checkbox" value="false" checked="" onclick="toggleDisable(this)">
+                    <span class="check"></span>
+                  </label>
+                </td>
             </tr>
             {% endfor %}
           </table>
         </div>
-
+        <br>
+        <div class="container warning-msg">
+          <div id="invalid-weight-warning" class="notification is-warning-msg is-hidden">
+            <i class="fas fa-exclamation-triangle"></i>
+            <p class="is-warning-msg has-text-weight-semibold content-font">The assessment items do not add up to 100%.</p>
+          </div>
+        </div>
         <div class="results-container">
         <br>
         
@@ -135,7 +151,7 @@
         </div>
         <br>
         <div class="container">
-          <table class="table" style="width: 82%">
+          <table class="table">
             <colgroup>
               <col span="1" style="width: 25%;">
               <col span="1" style="width: 25%;">
