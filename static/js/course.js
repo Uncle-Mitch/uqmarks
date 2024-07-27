@@ -1,11 +1,16 @@
 const scores = document.getElementsByName("score");
+const score_switches = document.getElementsByName("score-switch");
 
 function calculate(){
   let total_score = 0.00
   let decided = 0.00
+  let total_weights = 0.00
   for (let i = 0; i < scores.length; i++) {
     let weight = parseFloat((scores[i].dataset.weight))
-    if (scores[i].disabled === false) {
+    if (scores[i].disabled === true) {
+      continue
+    }
+    else {
       var resultArray = scores[i].value.split("/");
 
       if (resultArray.length != 2 
@@ -52,7 +57,16 @@ function calculate(){
         total_score += score*(weight/100);
         decided += weight/100;
       } 
+      total_weights += weight/100;
    }
+  }
+
+  // Check if total weights of items != 100 marks
+  if (total_weights < 1) {
+    document.getElementById("invalid-weight-warning").classList.remove('is-hidden');
+  }
+  else {
+    document.getElementById("invalid-weight-warning").classList.add('is-hidden');
   }
 
   // Cap required calculated score to be 100 marks maximum. (e.g. cannot be 1/101 required)
@@ -89,15 +103,33 @@ function calculate(){
   return false;
 }
 
+function toggleDisable(checkbox) {
+  const scoreInput = checkbox.closest('tr').querySelector('.score-input');
+  scoreInput.disabled = ! checkbox.checked;
+  calculate(); // Re-calculate with updated weights.
+}
+
 function onStart() {
   for (let i = 0; i < scores.length; i++) {
     if (scores[i].dataset.weight.toLowerCase().indexOf("%") === -1) {
       scores[i].disabled = true;
+      scores[i].title = "A VALID percentage weight format has not been detected.";
+      score_switches[i].disabled = true;
+      score_switches[i].checked = false;
+      score_switches[i].title = "A VALID percentage weight format has not been detected.";
     }
     else if (scores[i].dataset.weight.toLowerCase() == "0%") {
       scores[i].disabled = true;
+      scores[i].title = "A VALID percentage weight format has not been detected.";
+      score_switches[i].disabled = true;
+      score_switches[i].checked = false;
+      score_switches[i].title = "A VALID percentage weight format has not been detected.";
     }
   }
+  calculate();
 return false;
 }
-onStart();
+
+document.addEventListener('DOMContentLoaded', function() {
+  onStart();
+});
