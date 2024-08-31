@@ -16,7 +16,7 @@ from datetime import datetime
 import ipaddress
 import socket
 from dotenv import load_dotenv
-from flask_cache import cache, get_semester_list, get_cached_df
+from flask_cache import cache, get_semester_list, get_cached_df, get_announcement
 from dash_app import create_dash_app
 
 
@@ -62,6 +62,7 @@ def redirect_dash():
 
     return redirect('/')
 
+@cache.memoize(timeout=86400) # Unlikely for a course weighting to change
 def get_course(code:str, semester:str, year:str):
     code=code.upper()
     sem = int(semester)
@@ -94,7 +95,9 @@ def create_database(app):
 def get_index():
     create_database(app=app)
     semesters = get_semester_list()
-    return render_template('index.html', semesters=semesters)
+    return render_template('index.html', 
+                           semesters=semesters,
+                           announcement=get_announcement())
 
 @app.route('/redirect', methods=['GET','POST'])
 def redirect_code():
@@ -106,7 +109,9 @@ def redirect_code():
 
 @app.route('/invalid', methods=['GET','POST'])
 def invalid():
-    return render_template('invalid.html', semesters=get_semester_list())
+    return render_template('invalid.html', 
+                           semesters=get_semester_list(), 
+                           announcement=get_announcement())
 
 @app.route('/quiz', methods=['GET'])
 def quiz():
@@ -122,7 +127,8 @@ def all_routes(sem, text):
                                code=text, 
                                semesters=semesters,
                                sem=sem,
-                               invalid_text="Choose an available semester.")
+                               invalid_text="Choose an available semester.",
+                               announcement=get_announcement())
     
     if len(text) == 8 and text[:4].isalpha() and text[4:].isnumeric():
         year, _, semester = sem.partition('S')
@@ -134,14 +140,16 @@ def all_routes(sem, text):
                                    code=text,
                                    sem=sem,
                                    semesters=semesters,
-                                   invalid_text=e.message)
+                                   invalid_text=e.message,
+                                   announcement=get_announcement())
         # Usually happens when the course is not offered in that semester
         except WrongSemesterError as e:
             return render_template('invalid.html',
                                    code=text,
                                    sem=sem,
                                    semesters=semesters,
-                                   invalid_text=e.message)
+                                   invalid_text=e.message,
+                                   announcement=get_announcement())
         except Exception as e:
             if app.config['ENABLE_LOGGING']:
                 log_error(e, text, semester, year)
@@ -149,19 +157,22 @@ def all_routes(sem, text):
                                    code=text,
                                    sem=sem,
                                    semesters=semesters,
-                                   invalid_text=DEFAULT_INVALID_TEXT)
+                                   invalid_text=DEFAULT_INVALID_TEXT,
+                                   announcement=get_announcement())
         else:
             log_search(text, semester, year, THIS_FOLDER, app.config['ENABLE_LOGGING'])
             return render_template('course_code.html', 
                                    assessment_list=weightings, 
                                    code=text, sem=sem, 
-                                   semesters=semesters)
+                                   semesters=semesters,
+                                   announcement=get_announcement())
     else:
         return render_template('invalid.html', 
                                code=text, 
                                semesters=semesters,
                                sem=sem,
-                               invalid_text="The code is invalid.")
+                               invalid_text="The code is invalid.",
+                               announcement=get_announcement())
 
 @app.route('/analytics')
 @app.route('/analytics/', methods=['GET'])
