@@ -4,7 +4,7 @@ from pathlib import Path
 import json
 from analyse_search import load_data
 
-cache = Cache(config={'CACHE_TYPE': 'simple'}) 
+cache = Cache(config={'CACHE_TYPE': 'simple', 'CACHE_DEFAULT_TIMEOUT': 300}) 
 THIS_FOLDER = Path(__file__).parent.resolve()
 
 def get_semester_list():
@@ -74,6 +74,23 @@ def get_semester_list():
     #cache data for 24 hours
     cache.set("semester_list", semesters, timeout=60*60*24)
     return semesters
+
+def get_announcement():
+    """
+    Returns the announcement from the announcement.json file
+    Returns:
+        str: Announcement message
+    """
+    if cache.get("announcement") is not None:
+        return cache.get("announcement")
+    
+    with open(THIS_FOLDER / "announcement.json","r") as f:
+        announcement = json.load(f)
+        announcement = announcement['current']
+    
+    # Cache it for 24 hours
+    cache.set("announcement", announcement, timeout=60*60*24)
+    return announcement
 
 def get_cached_df():
     """
