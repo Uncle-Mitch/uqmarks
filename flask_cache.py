@@ -84,6 +84,11 @@ def get_announcement():
     if cache.get("announcement") is not None:
         return cache.get("announcement")
     
+    # If file doesn't exist, then make one
+    if not (THIS_FOLDER / "announcement.json").exists():
+        with open(THIS_FOLDER / "announcement.json","w") as f:
+            f.write('{"current": ""}')
+    
     with open(THIS_FOLDER / "announcement.json","r") as f:
         announcement = json.load(f)
         announcement = announcement['current']
