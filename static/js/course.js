@@ -4,7 +4,7 @@ const score_switches = document.getElementsByName("score-switch");
 function calculate(){
   let total_score = 0.00
   let decided = 0.00
-  let total_weights = 0.00
+  let total_weights = 0
   for (let i = 0; i < scores.length; i++) {
     let weight = parseFloat((scores[i].dataset.weight))
     if (scores[i].disabled === true) {
@@ -57,12 +57,13 @@ function calculate(){
         total_score += score*(weight/100);
         decided += weight/100;
       } 
-      total_weights += weight/100;
+      total_weights += weight;
    }
   }
 
+  total_weights = Math.round(total_weights);
   // Check if total weights of items != 100 marks
-  if (total_weights < 1) {
+  if (total_weights < 100) {
     document.getElementById("invalid-weight-warning").classList.remove('is-hidden');
   }
   else {
