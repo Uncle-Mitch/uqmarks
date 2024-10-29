@@ -158,8 +158,8 @@ def plot_most_frequent_codes(df:pd.DataFrame, highlight_code:str, interval="D"):
                     )
 
     fig.update_traces(hovertemplate="<br>".join([
-                            "Course: <b>%{x}</b>",
-                            "Searches: <b>%{y}</b>"
+                            "Searches: <b>%{x}</b>",
+                            "Course: <b>%{y}</b>"
                         ])
                     ) 
 
