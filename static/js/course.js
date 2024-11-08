@@ -3,7 +3,7 @@ const score_switches = document.getElementsByName("score-switch");
 
 function calculate(){
   let total_score = 0.00
-  let decided = 0.00
+  let decided = 0
   let total_weights = 0
   for (let i = 0; i < scores.length; i++) {
     let weight = parseFloat((scores[i].dataset.weight))
@@ -12,7 +12,6 @@ function calculate(){
     }
     else {
       var resultArray = scores[i].value.split("/");
-
       if (resultArray.length != 2 
         && scores[i].value.length != 0 
         && resultArray.length != 1) {
@@ -55,7 +54,7 @@ function calculate(){
           scores[i].value = score  + "%"
         }
         total_score += score*(weight/100);
-        decided += weight/100;
+        decided += weight;
       } 
       total_weights += weight;
    }
@@ -72,7 +71,7 @@ function calculate(){
 
   // Cap required calculated score to be 100 marks maximum. (e.g. cannot be 1/101 required)
   // Useful for courses with optional marks / best out of X quizes.
-  let undecided = Math.max(1-decided, 0); 
+  let undecided = Math.max(100-decided, 0); 
 
 
 
@@ -84,12 +83,12 @@ function calculate(){
 
     if (total_score >= cutoff) {
       required.innerText = 0;
-      score.innerText = '0/' + parseInt(undecided * 100).toString();
+      score.innerText = '0/' + parseInt(undecided).toString();
       row.style.backgroundColor = "#68FF77";
     } else {
-      let required_score = Math.ceil((cutoff - total_score)/ undecided);
+      let required_score = Math.ceil((cutoff - total_score)/ undecided * 100);
       required.innerText = required_score;
-      score.innerText = Math.ceil((required_score * undecided)).toString() + '/' + (parseInt(undecided*100)).toString();
+      score.innerText = Math.ceil((required_score * undecided / 100)).toString() + '/' + (parseInt(undecided)).toString();
       if (required_score > 100) {
         // The user cannot get the grade
         row.style.backgroundColor = "#FF3A3D";
