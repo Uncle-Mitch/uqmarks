@@ -10,8 +10,8 @@ THIS_FOLDER = Path(__file__).parent.resolve()
 def get_semester_list():
     # check if we already cached a recent semester list (within 24 hrs)
     # if already cached, RETURN immediately.
-    if cache.get("semester_list") is not None:
-        return cache.get("semester_list")
+    #if cache.get("semester_list") is not None:
+    #    return cache.get("semester_list")
     
     semesters = {}
     # if there is no cache:
@@ -66,14 +66,17 @@ def get_semester_list():
         year = data["year"]
         sem = data["semester"]
         sem_code = f"{year}S{sem}"
-        sem_text = f"Semester {sem} {year}"
-        if sem == 3:
-            sem_text = f"Summer Semester {year}-{year+1}"
-        semesters[sem_code] = sem_text
+        semesters[sem_code] = get_semester_text(year, sem)
     
     #cache data for 24 hours
     cache.set("semester_list", semesters, timeout=60*60*24)
     return semesters
+
+def get_semester_text(year: int, semester: int):
+    sem_text = f"Semester {semester} {year}"
+    if semester == 3:
+        sem_text = f"Summer Semester {year}-{year+1}"
+    return sem_text
 
 def get_announcement():
     """

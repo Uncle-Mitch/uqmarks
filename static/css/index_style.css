@@ -35,6 +35,10 @@
   width: 100% !important;
 }
 
+.btn-purp-bg:hover {
+  background-color: #9a5fce !important;
+}
+
 #tblresults{
   margin-top: 50px;
 }
@@ -77,6 +81,11 @@ body {
 .warning-msg {
   width: 82%;
 }
+
+.card-content .warning-msg {
+  width: 100%;
+}
+
 .is-warning-msg{
   background-color: #FFD700;
 }
@@ -118,8 +127,13 @@ p.is-danger {
 }
 
 @media only screen and (max-width: 768px) {
+  .card {
+    margin-left: 2% !important;
+    margin-right: 2% !important;
+  }
+  
   table{
-    width: 90% !important;
+    width: 96% !important;
   }
 
   .warning-msg{
@@ -132,6 +146,30 @@ p.is-danger {
 
   #analytics-iframe {
     display: none !important;
+  }
+
+  .switch, .check {
+    transform: scale(0.8); /* Reduce size */
+    margin-right: 0 !important;
+  }
+
+  .table td {
+    padding: .5em .2em   !important;
+    vertical-align: center !important;
+    text-align: center !important;
+  }
+
+  .table colgroup col:nth-child(1) {
+    width: 45% !important;
+  }
+  .table colgroup col:nth-child(2) {
+    width: 10% !important;
+  }
+  .table colgroup col:nth-child(3) {
+    width: 40% !important;
+  }
+  .table colgroup col:nth-child(4) {
+    width: 5% !important;
   }
 
   .body-align, .dash-body {
@@ -149,8 +187,8 @@ p.is-danger {
   }
 
   .columns {
-    padding-left: 5%;
-    padding-right: 5%;
+    padding-left: 2%;
+    padding-right: 2%;
   }
 
   .score-input {
@@ -359,3 +397,44 @@ th {
   text-align: center;
   font-weight: bold;
 }
+
+.card {
+  margin-left: 9%;
+  margin-right: 9%;
+  background-color: #F4EAFF;
+}
+
+.card-table{
+  width: 100% !important;
+  margin: 0% !important;
+  padding: 0% !important;
+  border-radius: 0px;
+  border-bottom-left-radius: 6px;
+  border-bottom-right-radius: 6px;
+}
+
+.card-content {
+  padding: 0;
+  margin: 0;
+  border-radius: 6px;
+}
+
+.card-header {
+  background-color: #E2D7EF;
+}
+
+.card-header:hover {
+  background-color: #ede9f1;
+  cursor: pointer;
+}
+
+.card-delete-icon {
+  color: red;
+}
+
+.card-delete-icon:hover {
+  color: black;
+  cursor: pointer;
+}
+
+

@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>UQ Grade Calculator</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+    <link rel="stylesheet" href="{{url_for('static', filename='css/index_style.css')}}">
+    <link rel="shortcut icon" href="{{ url_for('static', filename='images/favicon.ico') }}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', filename='images/apple-touch-icon.png') }}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='images/favicon-32x32.png') }}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ url_for('static', filename='images/favicon-16x16.png') }}">
+    <link rel="icon" type="image/png" sizes="192x192" href="{{ url_for('static', filename='images/android-chrome-192x192.png') }}">
+    <link rel="icon" type="image/png" sizes="512x512" href="{{ url_for('static', filename='images/android-chrome-512x512.png') }}">
+    <link rel="preload" href="{{url_for('static', filename='fonts//RedHatDisplay-Regular.ttf')}}" as="font">
+    <link rel="preload" href="{{url_for('static', filename='fonts///Sato-Medium.ttf')}}" as="font">
+    <link rel="stylesheet" href="{{url_for('static', filename='css/bulma-switch-main.css')}}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <meta name="robots" content="noindex">
+        <meta property='og:title'  content='UQ WAM Calculator'>
+    <meta property='og:url'  content='https://www.uqmarks.com/'>
+    <meta name="robots" content="noindex">
+    <meta property='og:description'  content='Calculate your WAM (Weighted Average Mark) for UQ students.'>
+    <meta property="og:image" content="https://www.uqmarks.com/static/images/share.png" />
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-BW68VRSJ96"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-BW68VRSJ96');
+    </script>
+  </head>
+<nav class="navbar purp-bg" role="navigation" aria-label="main navigation">
+    <div class="navbar-brand">
+      <a class="navbar-item" href="/">
+        <img src="{{url_for('static', filename='images/uqmarks_logo.png')}}" alt="site logo" style="max-height: 50px" class="py-3 px-3">
+      </a>
+
+      <a class="navbar-burger" id='burger'>
+        <span class="white-bg"></span>
+        <span class="white-bg"></span>
+        <span class="white-bg"></span>
+      </a>
+    </div>
+
+    <div id="nav-links" class="navbar-menu purp-bg">
+      <div class="navbar-start">
+        <a class="navbar-item white-text" href="/">
+          Grade Calculator
+        </a>
+
+        <a class="navbar-item white-text" href="/quiz">
+          Weekly Quiz Calculator
+        </a>
+
+        <a class="navbar-item white-text" href="/analytics">
+          Analytics
+        </a>
+
+      </div>
+
+      </div>
+    </div>
+  </nav>
+  <body>
+
+<section class="hero purp-bg body-align">
+    <div class="hero-body">
+      <h1 class="title text-light-purp is-size-1">
+        UQMARKS WAM Calculator (Beta)
+      </h1>
+      <h2 name="announcement" class="text-white is-size-4">{{announcement}}</h2>
+    </div>
+  </section>
+  <section class="section purp-bg body-align" id='section-main'>
+    <div class="container">
+      <div class="content-is-large">
+        <div class="container">
+          <form id="courseform" class="justify-align">
+            <div class="columns is-centered is-3 is-multiline">
+              <div class="column">
+                <p class="control">
+                  <div class="select is-medium is-fullwidth">
+                    <select id="wam_semester" name="wam_semester" class='content-font'>
+                      {% for sem_code, sem_text in semesters.items() %}
+                        <option value="{{sem_code}}" {% if sem == sem_code %} selected {% endif %}>{{sem_text}}</option>
+                      {% endfor %}
+                    </select>
+                  </div>
+                </p>
+              </div>
+              <div class="column">
+                <div class="control ccode is-large" id="input_container">
+                  <input id="wam_course_code" name="wam_course_code" class="input is-medium content-font" type="text" placeholder="Course Code" autocomplete="off" spellcheck="false" autofocus>
+                  <p class="is-danger is-size-6 content-font" id="error-message"></p>
+                </div>
+              </div>
+              <div class="column is-one-fifth">
+                <p class="control">
+                    <button id="submitBtn" class="button btn-purp-bg is-medium content-font" type="submit">
+                    Add
+                    </button>
+                </p>
+              </div>
+            </div>
+          </form>
+
+        </div>
+      </div>
+        <div class="container">
+          <div class="columns is-centered is-5 is-multiline">
+            <div class="column">
+              <button class="button btn-purp-bg is-medium content-font" id="saveButton">
+                <i class="fas fa-save" style="margin-right: 6px;"></i> Save
+              </button>
+            </div>
+            <div class="column"></div>
+            <div class="column"></div>
+            <div class="column"></div>
+            <div class="column"></div>
+          </div>
+        </div>
+        
+        
+        <div class="container" id="tblresults">
+          
+          {% for course in course_list %}
+          <div class="card" id="{{course.code}}-{{course.year}}S{{course.semester}}-card">
+            <header class="card-header" data-card="{{course.code}}-{{course.year}}S{{course.semester}}-card">
+              <span class="card-header-title">{{course.code}} | {{course.display_text}}</span>
+              <span class="card-header-icon total-score" id="{{course.code}}-{{course.year}}S{{course.semester}}-lbltotalScore">0.00%</span>
+
+              <button class="card-header-icon" aria-label="more options" data-card="{{course.code}}-{{course.year}}S{{course.semester}}-card">
+                <i class="fas fa-angle-up" aria-hidden="true"></i>
+              </button>
+            </header>
+            <div class="card-content">
+              <table class="table card-table">
+                <colgroup>
+                  <col span="1" style="width: 45%;">
+                  <col span="1" style="width: 20%;">
+                  <col span="1" style="width: 25%;">
+                  <col span="1" style="width: 10%;">
+                </colgroup>
+                <thead>
+                  <th>Assessment</th>
+                  <th>Weight</th>
+                  <th>Your Score</th>
+                  <th></th>
+                </thead>
+                {% for name, weight in course.assessment_list%}
+                <tr>
+                  <td>{{ name }}</td>
+                  <td>{{ weight }}</td>
+                  <td>
+                    <input 
+                      onchange="calculate('{{course.code}}-{{course.year}}S{{course.semester}}')" 
+                      data-weight={{weight}}
+                      data-code="{{course.code}}-{{course.year}}S{{course.semester}}"
+                      data-item="{{loop.index - 1}}"
+                      name="{{course.code}}-{{course.year}}S{{course.semester}}-score"
+                      class="input score-input"
+                      type="text"
+                      placeholder="90, 90% or 9/10"
+                      style="width: 100%;">
+                  </td>
+                  <td style="display: flex; justify-content: center; align-items: center;">
+                    <div class="container">
+                      <label class="switch is-rounded is-medium">
+                        <input 
+                          class="score-switch" 
+                          data-code="{{course.code}}-{{course.year}}S{{course.semester}}"
+                          data-item="{{loop.index - 1}}"
+                          name="score-switch"
+                          type="checkbox"
+                          value="false"
+                          checked=""
+                          onclick="toggleDisable(this)">
+                        <span class="check"></span>
+                      </label>
+                    </div>
+                    
+                  </td>
+                </tr>
+                {% endfor %}
+                <tr>
+                  <td></td>
+                  <td></td>
+                  <td></td>
+                  <td>
+                    <span class="card-delete-icon" aria-label="more options" data-code="{{course.code}}" data-semester="{{course.year}}S{{course.semester}}">
+                      <i class="fas fa-trash" aria-hidden="true"></i>
+                    </span>
+                  </td>
+                </tr>
+              </table>
+              
+              <div class="container warning-msg">
+                <div id="{{course.code}}-{{course.year}}S{{course.semester}}-invalid-weight-warning" class="notification is-warning-msg is-hidden">
+                  <i class="fas fa-exclamation-triangle"></i>
+                  <p class="is-warning-msg has-text-weight-semibold content-font">The assessment items do not add up to 100%.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <br>
+          {% endfor %}
+          
+        </div>
+        
+        <div class="results-container">
+        <br>
+        
+        <br>
+          <h2 class="subtitle is-size-2 has-text-weight-semibold text-light-purp">Results</h2>
+          <p class="subtitle text-light-purp" id="final-lbltotalScore">Your WAM: 0%</p>
+        </div>
+        <br>
+        <br>
+      </div>
+
+    </div>
+  </section>
+  </body>
+  <script type='text/javascript' src="{{url_for('static', filename='js/wam_course.js')}}"></script>
+  <script type='text/javascript' src="{{url_for('static', filename='js/navbar.js')}}"></script>
+  <footer class="footer">
+    <div class="content has-text-centered">
+      <p class="footer-p">
+        <strong class="footer-p">UQ Grade Calculator</strong> by <a class="footer-p" href="https://github.com/Uncle-Mitch/uqmarks">UncleMitch</a>.
+        <br>
+        Inspired by <a class="footer-p" href="https://uqfinal.com/">UQfinal</a>
+      </p>
+    </div>
+  </footer>
+</html>
