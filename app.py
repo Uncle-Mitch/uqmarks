@@ -1,6 +1,7 @@
 import requests
 from bs4 import BeautifulSoup
-from flask import Flask, render_template, redirect, request, url_for
+from flask import Flask, render_template, redirect, request, url_for, jsonify, session
+from flask_session import  Session
 import json
 from get_assessment import *
 from log_events import *
@@ -12,11 +13,11 @@ import os
 import time
 from pathlib import Path
 from flask_caching import Cache
-from datetime import datetime
+from datetime import datetime, timedelta
 import ipaddress
 import socket
 from dotenv import load_dotenv
-from flask_cache import cache, get_semester_list, get_cached_df, get_announcement
+from flask_cache import cache, get_semester_list, get_cached_df, get_semester_text, get_announcement
 from dash_app import create_dash_app
 
 
@@ -31,6 +32,8 @@ app.config['ENABLE_LOGGING'] = True if os.environ.get('ENABLE_LOGGING') == "T" e
 DEBUG_MODE = True if os.environ['DEBUG_MODE'] == "T" else False
 THIS_FOLDER = Path(__file__).parent.resolve()
 
+app.secret_key = os.environ['SECRET_KEY']
+
 cache.init_app(app)
 
 DEFAULT_INVALID_TEXT = "The ECP is currently unavailable or the code is invalid"
@@ -40,9 +43,26 @@ class Course(db.Model):
     semester = db.Column(db.Integer, primary_key=True)
     year = db.Column(db.Integer, primary_key=True)
     asmts = db.Column(db.String(4000))
+
+class Score(db.Model):
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    code = db.Column(db.String(15))
+    scores = db.Column(db.String(4000))
+    session_id = db.Column(db.String(255), nullable=False)
     
 db.init_app(app)
+app.config['SESSION_TYPE'] = 'sqlalchemy'
+app.config['SESSION_SQLALCHEMY'] = db
+app.config['SESSION_COOKIE_NAME'] = 'UQmarks WAM'
+
+sesh = Session()
+sesh.init_app(app)
 dash_app = create_dash_app(app)
+
+def is_code_syntax_valid(code: str) -> bool:
+    if len(code) == 8 and code[:4].isalpha() and code[4:].isnumeric():
+        return True
+    return False
 
 @app.route('/dash', methods=['GET'])
 @app.route('/dash/', methods=['GET'])
@@ -65,6 +85,8 @@ def redirect_dash():
 @cache.memoize(timeout=86400) # Unlikely for a course weighting to change
 def get_course(code:str, semester:str, year:str):
     code=code.upper()
+    if not is_code_syntax_valid(code):
+        raise CourseNotFoundError(code)
     sem = int(semester)
     yr = int(year)
     
@@ -87,6 +109,8 @@ def get_course(code:str, semester:str, year:str):
     return weightings
 
 def create_database(app):
+    with app.app_context():
+        db.create_all()
     if not path.exists(DB_NAME):
         with app.app_context():
             db.create_all()
@@ -119,6 +143,87 @@ def quiz():
         log_quiz()
     return render_template('quiz.html')
 
+
+## WAM Calculator ##
+
+@app.route('/api/wam/save_score', methods=['POST'])
+def wam_save_score():
+    course_id = request.form['wam_course_id']
+    scores = request.form['scores']
+    if not course_id or not scores:
+        return jsonify({'success': False, 'error': 'Missing required fields'}), 401
+
+    if not session.get('scores'):
+        session['scores'] = {}
+    
+    session['scores'][course_id] = json.loads(scores)
+    
+    return jsonify({"message": "Score added successfully"})
+
+@app.route('/api/wam/get_scores', methods=['GET'])
+def wam_get_scores():
+    if not session.get('scores'):
+        session['scores'] = {}
+    scores = session['scores']   
+    return jsonify({"success": True, "message": "Score retrieved successfully", "scores": scores})
+
+@app.route('/api/wam/add_course', methods=['POST'])
+def wam_add_course():
+    course_code = request.form['wam_course_code'].upper()
+    semester_code = request.form['wam_semester']
+    if not course_code or not semester_code:
+        return jsonify({'success': False, 'error': 'Missing required fields'}), 401
+    
+    course_id = f"{course_code}-{semester_code}"
+    if course_id in session.get('courses', {}):
+        return jsonify({'success': True, 'error': 'Course already exists!'}), 200
+    
+    semester = semester_code.split("S")[1]
+    year = semester_code.split("S")[0]
+    try:
+        assessment_list = get_course(course_code, semester, year)
+    except WrongSemesterError as e:
+        return jsonify({'success': False, 'error': e.message}), 400
+    except CourseNotFoundError as e:
+        return jsonify({'success': False, 'error': e.message}), 400
+    except Exception as e:
+        return jsonify({'success': False, 'error': 'An unexpected error has occurred.'}), 400
+    
+    display_text = get_semester_text(int(year), int(semester))
+    course_info = {"code":course_code, "year": int(year), "semester": int(semester), "assessment_list":assessment_list, "display_text": display_text}
+    session['courses'][f"{course_code}-{year}S{semester}"] = course_info
+
+    return jsonify({'success': True, 'message': 'Course added successfully', 'courses': course_info}), 201
+
+@app.route('/api/wam/remove_course', methods=['POST'])
+def wam_remove_course():
+    course_code = request.form['wam_course_code'].upper()
+    semester_code = request.form['wam_semester']
+    if not course_code or not semester_code:
+        return jsonify({'success': False, 'error': 'Missing required fields'}), 400
+    
+    course_id = f"{course_code}-{semester_code}"
+    if course_id not in session['courses']:
+        return jsonify({'success': True, 'error': 'Course was not in the system'}), 201 
+
+    del session['courses'][f"{course_code}-{semester_code}"]
+    del session['scores'][f"{course_code}-{semester_code}"]
+    return jsonify({'success': True, 'message': 'Course removed successfully'}), 201
+
+@app.route('/wam', methods=['GET','POST'])
+def wam_calculator():  
+    # minus sign for descending order
+    if not session.get("courses"):
+        session["courses"] = {}
+    my_courses = session.get('courses', {})
+    course_list = list(my_courses.values())
+    course_list.sort(key=lambda course: (-course["year"], -course["semester"]))
+    return render_template('wam_calculator.html',
+                                semesters=get_semester_list(),
+                                course_list= course_list,
+                                invalid_text="Choose an available semester.",
+                                announcement=get_announcement())
+
 @app.route('/<path:sem>/<path:text>', methods=['GET','POST'])
 def all_routes(sem, text):
     semesters = get_semester_list()
@@ -130,7 +235,7 @@ def all_routes(sem, text):
                                invalid_text="Choose an available semester.",
                                announcement=get_announcement())
     
-    if len(text) == 8 and text[:4].isalpha() and text[4:].isnumeric():
+    if is_code_syntax_valid(text):
         year, _, semester = sem.partition('S')
         try:
             weightings = get_course(text, semester, year)
