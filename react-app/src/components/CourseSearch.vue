@@ -69,7 +69,7 @@ watch(
             semester.value = options[0].value;
         }
     },
-    { immediate: true }
+    { immediate: true },
 );
 const courseCode = ref((props.initialCourseCode || "").toUpperCase());
 

@@ -57,7 +57,7 @@ watch(
     () => route.path,
     (newPath) => {
         tab.value = newPath;
-    }
+    },
 );
 </script>
 
