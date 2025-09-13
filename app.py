@@ -1,6 +1,12 @@
-import requests
-from bs4 import BeautifulSoup
-from flask import Flask, render_template, redirect, request, url_for
+import mimetypes
+mimetypes.add_type('application/javascript', '.js')
+mimetypes.add_type('text/css', '.css')
+import re
+from flask import Flask, redirect, request, jsonify, send_from_directory
+from flask_cors import cross_origin, CORS
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+from flask_limiter.errors import RateLimitExceeded
 import json
 from get_assessment import *
 from log_events import *
@@ -9,7 +15,6 @@ from sqlalchemy import exc
 from os import path
 from ast import literal_eval as make_tuple
 import os
-import time
 from pathlib import Path
 from flask_caching import Cache
 from datetime import datetime
@@ -23,11 +28,13 @@ from dash_app import create_dash_app
 load_dotenv()
 db = SQLAlchemy()
 DB_NAME = "course.sqlite"
-app = Flask(__name__)
+app = Flask(__name__, static_folder="./react-app/dist", static_url_path="")
 app.config['SECRET_KEY'] = os.environ['SECRET_KEY']
 app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{DB_NAME}'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['ENABLE_LOGGING'] = True if os.environ.get('ENABLE_LOGGING') == "T" else False
+CORS(app)
+limiter = Limiter(get_remote_address, app=app)
 DEBUG_MODE = True if os.environ['DEBUG_MODE'] == "T" else False
 THIS_FOLDER = Path(__file__).parent.resolve()
 
@@ -63,17 +70,20 @@ def redirect_dash():
     return redirect('/')
 
 @cache.memoize(timeout=86400) # Unlikely for a course weighting to change
-def get_course(code:str, semester:str, year:str):
+def get_course(code:str, semester:str, year:str, section_code:str=None):
     code=code.upper()
     sem = int(semester)
     yr = int(year)
     
     # Check if we have existing db entry for this course
-    found_course_count = db.session.query(Course).filter_by(code=code, year=yr, semester=sem).count()
-    if found_course_count >= 1:
-        found_course = db.session.query(Course).filter_by(code=code, year=yr, semester=sem).first()
+    found_course = db.session.query(Course).filter_by(code=code, year=yr, semester=sem).first()
+    if found_course:
         return make_tuple(found_course.asmts)
-    weightings = get_assessments(code, semester, year)
+    
+    if section_code is None:
+        raise CourseMissingError(code)
+    
+    weightings = get_assessments(code, semester, year, section_code)
     db_asmts = str(weightings)
     new_course = Course(code=code, semester=sem, year=yr, asmts=db_asmts)
     
@@ -91,102 +101,122 @@ def create_database(app):
         with app.app_context():
             db.create_all()
 
-@app.route('/', methods=['GET','POST'])
-def get_index():
-    create_database(app=app)
-    semesters = get_semester_list()
-    return render_template('index.html', 
-                           semesters=semesters,
-                           announcement=get_announcement())
+def is_valid_course_code(code):
+    return bool(re.match(r"^[A-Za-z]{4}[0-9]{4}$", code))
 
-@app.route('/redirect', methods=['GET','POST'])
-def redirect_code():
-    if request.method == 'POST':
-        code = request.form['CourseCode'].upper()
-        semester = request.form['Semester']
-        return redirect(f'/{semester}/{code}')
-    return redirect('/invalid')
+def is_valid_semester_id(semester_id):
+    return bool(re.match(r"^\d{4}S[123]$", semester_id))
 
-@app.route('/invalid', methods=['GET','POST'])
-def invalid():
-    return render_template('invalid.html', 
-                           semesters=get_semester_list(), 
-                           announcement=get_announcement())
+def is_valid_course_profile_url(url):
+    return bool(re.match(r"^https:\/\/course-profiles\.uq\.edu\.au\/course-profiles\/[A-Za-z]{4}[0-9]{4}-\d+-\d+(#[-A-Za-z0-9]+)?$", url))
 
-@app.route('/quiz', methods=['GET'])
-def quiz():
-    if app.config['ENABLE_LOGGING']:
-        log_quiz()
-    return render_template('quiz.html')
-
-@app.route('/<path:sem>/<path:text>', methods=['GET','POST'])
-def all_routes(sem, text):
-    semesters = get_semester_list()
-    if sem not in semesters:
-        return render_template('invalid.html', 
-                               code=text, 
-                               semesters=semesters,
-                               sem=sem,
-                               invalid_text="Choose an available semester.",
-                               announcement=get_announcement())
+@app.errorhandler(RateLimitExceeded)
+def handle_ratelimit(e):
+    return jsonify({
+        'success': False,
+        'error': 'Rate limit exceeded. Please wait before making more requests.'
+    }), 429
     
-    if len(text) == 8 and text[:4].isalpha() and text[4:].isnumeric():
-        year, _, semester = sem.partition('S')
-        try:
-            weightings = get_course(text, semester, year)
-        # We couldn't find the specified course.
-        except CourseNotFoundError as e:
-            return render_template('invalid.html',
-                                   code=text,
-                                   sem=sem,
-                                   semesters=semesters,
-                                   invalid_text=e.message,
-                                   announcement=get_announcement())
-        # Usually happens when the course is not offered in that semester
-        except WrongSemesterError as e:
-            return render_template('invalid.html',
-                                   code=text,
-                                   sem=sem,
-                                   semesters=semesters,
-                                   invalid_text=e.message,
-                                   announcement=get_announcement())
-        except Exception as e:
-            if app.config['ENABLE_LOGGING']:
-                log_error(e, text, semester, year)
-            return render_template('invalid.html', 
-                                   code=text,
-                                   sem=sem,
-                                   semesters=semesters,
-                                   invalid_text=DEFAULT_INVALID_TEXT,
-                                   announcement=get_announcement())
+
+@app.route('/api/semesters/', methods=['GET'])
+@cross_origin(origins=["https://www.uqmarks.com", "https://uqmarks.com"])
+@limiter.limit("6/minute")
+def api_get_semesters():
+    semesters = get_semester_list()
+    result = []
+    for key in semesters.keys():
+        result.append({"value": key, "label": semesters[key]})
+
+    return result
+
+
+@app.route('/api/getcourse/', methods=['GET'])
+@cross_origin(origins=["https://www.uqmarks.com", "https://uqmarks.com"])
+@limiter.limit("10/minute")
+def api_get_course():
+    course_code = request.args.get('courseCode', '').upper()
+    semester_id = request.args.get('semesterId', '')
+    course_profile_url = request.args.get('courseProfileUrl', '')
+
+    if not course_code or not semester_id:
+        return jsonify({'success': False, 'error': 'Missing course code or semester.'}), 400
+
+    if not is_valid_course_code(course_code) or not is_valid_semester_id(semester_id):
+        return jsonify({'success': False, 'error': 'Invalid course code or semester'}), 400
+    
+    if (len(course_profile_url) > 0 and not is_valid_course_profile_url(course_profile_url)):
+        return jsonify({'success': False, 'error': 'Invalid course profile URL', 'showURLRequest': True}), 400
+    
+    year = semester_id.split("S")[0]
+    semester = semester_id.split("S")[1]
+
+    try:
+        if len(course_profile_url) > 0:
+            match = re.search(
+                rf"/course-profiles/({re.escape(course_code)}-\d+-\d+)",
+                course_profile_url
+            )
+            if not match:
+                raise IncorrectCourseProfileError(course_code, semester, year)
+            section_code = match.group(1)
+            weightings = get_course(course_code, semester, year, section_code=section_code)
+            assessment_items = []
+            for w in weightings:
+                assessment_items.append({"title": w[0], "weight": w[1]})
+            log_search(course_code, semester, year, THIS_FOLDER, app.config['ENABLE_LOGGING'])
+
+            return jsonify({
+                'success': True,
+                'courseCode': course_code,
+                'semesterId': semester_id,
+                'assessmentItems': assessment_items
+            })
         else:
-            log_search(text, semester, year, THIS_FOLDER, app.config['ENABLE_LOGGING'])
-            return render_template('course_code.html', 
-                                   assessment_list=weightings, 
-                                   code=text, sem=sem, 
-                                   semesters=semesters,
-                                   announcement=get_announcement())
-    else:
-        return render_template('invalid.html', 
-                               code=text, 
-                               semesters=semesters,
-                               sem=sem,
-                               invalid_text="The code is invalid.",
-                               announcement=get_announcement())
+            weightings = get_course(course_code, semester, year)
+            assessment_items = []
+            for w in weightings:
+                assessment_items.append({"title": w[0], "weight": w[1]})
+            log_search(course_code, semester, year, THIS_FOLDER, app.config['ENABLE_LOGGING'])
 
+            return jsonify({
+                'success': True,
+                'courseCode': course_code,
+                'semesterId': semester_id,
+                'assessmentItems': assessment_items
+            })
+    except CourseMissingError as e:
+        return jsonify({'success': False, 'error': '', 'showURLRequest': True}), 404
+    except CourseNotFoundError as e:
+        return jsonify({'success': False, 'error': str(e.message)}), 400
+    except WrongSemesterError as e:
+        return jsonify({'success': False, 'error': str(e.message)}), 400
+    except IncorrectCourseProfileError as e:
+        return jsonify({'success': False, 'error': str(e.message), 'showURLRequest': True}), 400
+    except Exception as e:
+        log_error(e, course_code, semester, year)
+        return jsonify({'success': False, 'error': DEFAULT_INVALID_TEXT}), 400
+
+@app.route('/api/announcement/', methods=['GET'])
+@cross_origin(origins=["https://www.uqmarks.com", "https://uqmarks.com"])
+@limiter.limit("3/minute")
+def api_get_announcement():
+
+    return jsonify({'success': True, 'announcement': get_announcement()}), 200
+
+@app.route('/')
+@app.route('/course')
 @app.route('/analytics')
-@app.route('/analytics/', methods=['GET'])
-def show_analytics_home():
-    return render_template('analytics.html', page='home', semesters=get_semester_list())
+@app.route('/quiz')
+def home():
+    return send_from_directory(app.static_folder, "index.html")
 
-@app.route('/analytics/courses')
-def show_analytics_courses():
-    return render_template('analytics.html', page='courses', semesters=get_semester_list())
-
-@app.route('/analytics/hourly')
-def show_analytics_hourly():
-    return render_template('analytics.html', page='hourly', semesters=get_semester_list())
-
+@app.route('/<path:path>')
+def static_proxy(path):
+    full_path = os.path.join(app.static_folder, path)
+    if os.path.exists(full_path):
+        return send_from_directory(app.static_folder, path)
+    else:
+        return send_from_directory(app.static_folder, 'index.html')
 
 def start_app():
     create_database(app=app)

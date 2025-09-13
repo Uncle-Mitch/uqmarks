@@ -9,9 +9,21 @@ from pathlib import Path
 
 THIS_FOLDER = Path(__file__).parent.resolve()
 
+class CourseMissingError(Exception):
+    def __init__(self, course: str):
+        self.message = f"The course '{course}' has not been documented yet."
+        super().__init__(self.message)
+
 class CourseNotFoundError(Exception):
     def __init__(self, course: str):
         self.message = f"The course '{course}' could not be found or does not exist."
+        super().__init__(self.message)
+
+class IncorrectCourseProfileError(Exception):
+    def __init__(self, course: str, sem: str, year: str):
+        self.message = f"The course profile URL given does not match course '{course}' for Semester {sem} {year}"
+        if sem == "3":
+            self.message = f"The course profile URL given does not match course '{course}' for Semester {sem} {year}-{year+1}"
         super().__init__(self.message)
         
 class WrongSemesterError(Exception):
@@ -20,37 +32,6 @@ class WrongSemesterError(Exception):
         if sem == "3":
             self.message = f"The course '{course}' does not exist in the summer semester."
         super().__init__(self.message)
-
-
-def return_url(code):
-    return f'https://my.uq.edu.au/programs-courses/course.html?course_code={code}'
-
-def get_page(code:str, semester:str , year:str):
-    if semester not in ["1", "2"]:
-        semester = f"Summer Semester"
-    else:
-        semester = f'Semester {semester}'
-    link = return_url(code)
-    headers = requests.utils.default_headers()
-    headers.update(
-        {
-            'User-Agent': 'My User Agent 1.0',
-        }
-    )
-    page = requests.get(link, headers=headers)
-    soup = BeautifulSoup(page.text, 'html.parser')
-    
-    if soup.find(id='course-notfound') is not None:
-        raise CourseNotFoundError(code)
-    box = soup.find_all('tr')
-
-    for i in box:
-        text = i.text.strip()
-        if (year in text and semester in text 
-            and 'unavailable' not in text):
-            h = i.find_all('a', class_="profile-available")
-            href = h[0]['href']
-            return href
 
 
 def get_table_old(section_code):
@@ -96,20 +77,34 @@ def get_table_old(section_code):
     df.loc[df['Assessment Task'].str.contains("||"), ['Assessment Task']] = df['Assessment Task'].str.partition('||')[0]
     return list(df.itertuples(index=False, name=None))
 
-def get_table(semester, year, section_code):
+def get_table(semester, year, course_code, section_code):
     """Gets the assessment items for courses
 
     Args:
         semester (int): Semester for course
         year (int): year for course
-        section_code (str): Course code
+        course_code (str): Course code
+        section_code (str): Code for the course profile page
     """
-    headers = requests.utils.default_headers()
-    headers.update(
-        {
-            'User-Agent': 'My User Agent 1.0',
-        }
-    )
+    headers = {
+        "User-Agent": (
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+            "AppleWebKit/537.36 (KHTML, like Gecko) "
+            "Chrome/124.0.0.0 Safari/537.36"
+        ),
+        "Accept": (
+            "text/html,application/xhtml+xml,application/xml;q=0.9,"
+            "image/avif,image/webp,image/apng,*/*;q=0.8"
+        ),
+        "Accept-Language": "en-US,en;q=0.9",
+        "Accept-Encoding": "gzip, deflate, br",
+        "Connection": "keep-alive",
+        "Upgrade-Insecure-Requests": "1",
+        "Sec-Fetch-Dest": "document",
+        "Sec-Fetch-Mode": "navigate",
+        "Sec-Fetch-Site": "none",
+        "Sec-Fetch-User": "?1",
+    }
     
     # For previous semesters, use old version of course profile
     if (year == 2024 and semester == 1)or year < 2024:
@@ -119,6 +114,20 @@ def get_table(semester, year, section_code):
     page = requests.get(url, headers=headers)
     html_content = page.text
     soup = BeautifulSoup(html_content, 'html.parser')
+
+    # Check that course is correct semester and year
+    try: 
+        hero_section = soup.find('div', class_='hero__text')
+        course_info, sem_info = "", ""
+        course_info = hero_section.find_all('h1')[0].text.strip()
+        sem_info = hero_section.find_all('dd', class_="hero__course-offering__value")[0].text.strip()
+        desired_sem = f"Sem {semester} {year}"
+        if semester == 3:
+            desired_sem = f"Summer {year}"
+        if course_code not in course_info or desired_sem not in sem_info:
+            raise Exception()
+    except:
+        raise IncorrectCourseProfileError(course_code, semester, year)
 
     # Remove <ul class="icon-list"> elements
     for ul in soup.find_all('ul', class_='icon-list'):
@@ -153,14 +162,10 @@ def get_table(semester, year, section_code):
     return list(df.itertuples(index=False, name=None))
 
 
-def get_assessments(code:str, semester:str, year:str):
-    course_profile = get_page(code, semester, year)
-    if course_profile is None:
-        raise WrongSemesterError(code, semester)
-    section_code = course_profile.rpartition('/')[2]
+def get_assessments(code:str, semester:str, year:str, section_code:str):
     year = int(year)
     semester = int(semester)
-    table = get_table(semester, year, section_code)
+    table = get_table(semester, year, code, section_code)
 
     # send to discord
     headers = requests.utils.default_headers()
@@ -187,7 +192,6 @@ def get_assessments(code:str, semester:str, year:str):
         currentTime = int(time.time())
         file.write(f"{currentTime}|{code}|{semester}|{year}\n")
 
-    #result = requests.post(os.environ['LOG_LINK'], json = data, headers=headers)
     return table
 
 
