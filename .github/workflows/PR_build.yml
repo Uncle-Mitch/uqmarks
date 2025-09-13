@@ -2,9 +2,9 @@ name: Lint Code Base
 
 on:
   push:
-    branches: [ "master" ]
+    branches: ["master"]
   pull_request:
-    branches: [ "master" ]
+    branches: ["master"]
 
 jobs:
   js-build-and-format:
@@ -23,9 +23,15 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
-        
+
       - name: Build npm bundle
         run: npm run build
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: built-uqmarks-vue-app
+          path: react-app/dist
 
       - name: Run Prettier format check
         run: npm run format:check
