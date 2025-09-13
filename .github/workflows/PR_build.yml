@@ -26,6 +26,8 @@ jobs:
 
       - name: Build npm bundle
         run: npm run build
+        env:
+          VITE_API_BASE_URL: https://www.uqmarks.com
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
