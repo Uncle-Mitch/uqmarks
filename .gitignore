@@ -139,3 +139,6 @@ logs/
 semesters.json
 index.md
 announcement.json
+
+.env.development
+.env.production
