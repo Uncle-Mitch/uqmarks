@@ -108,7 +108,9 @@ def is_valid_semester_id(semester_id):
     return bool(re.match(r"^\d{4}S[123]$", semester_id))
 
 def is_valid_course_profile_url(url):
-    return bool(re.match(r"^https:\/\/course-profiles\.uq\.edu\.au\/course-profiles\/[A-Za-z]{4}[0-9]{4}-\d+-\d+(#[-A-Za-z0-9]+)?$", url))
+    normal_pattern = bool(re.match(r"^https:\/\/course-profiles\.uq\.edu\.au\/course-profiles\/[A-Za-z]{4}[0-9]{4}-\d+-\d+(#[-A-Za-z0-9]+)?$", url))
+    archive_pattern = bool(re.match(r"^https://archive\.course-profiles\.uq\.edu\.au/student_section_loader/section_\d+/\d+$", url))
+    return normal_pattern or archive_pattern
 
 @app.errorhandler(RateLimitExceeded)
 def handle_ratelimit(e):
@@ -157,7 +159,10 @@ def api_get_course():
                 course_profile_url
             )
             if not match:
+                match = re.search(r"/student_section_loader/section_\d+/(\d+)", course_profile_url)
+            if not match:
                 raise IncorrectCourseProfileError(course_code, semester, year)
+            
             section_code = match.group(1)
             weightings = get_course(course_code, semester, year, section_code=section_code)
             assessment_items = []
