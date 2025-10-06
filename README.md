@@ -34,3 +34,8 @@ ENABLE_LOGGING - T/F , if you want to enable logging of operations
       - If false, LOG_LINK and ERROR_LOG_LINK env variables won't matter.
 
 2. Run `app.py`
+3. Open a new terminal:
+```
+cd react-app
+npm run dev
+```
