@@ -79,3 +79,11 @@ button:focus-visible {
     background-color: #ff3a3d;
     color: #ffffff;
 }
+
+body,
+.v-application {
+    font-family: "Montserrat", sans-serif;
+    .title {
+        font-family: "Montserrat", sans-serif !important;
+    }
+}

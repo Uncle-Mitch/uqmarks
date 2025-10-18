@@ -116,8 +116,13 @@
 
         <v-row justify="center" class="mt-12" v-if="validInput">
             <v-col cols="12" md="5">
-                <h2 class="text-h4 font-weight-bold results-title">Results</h2>
-                <h3 class="text-h6 total-score">Total Score: {{ totalScore }}%</h3>
+                <GradientText :from="fromColor" :to="toColor" tag="h4" class="text-primary text-h4 font-weight-bold">
+                    Total Score
+                </GradientText>
+                <br></br>
+                <GradientText :from="fromColor" :to="toColor" tag="h4" class="text-primary text-h4 font-weight-bold">
+                    {{ totalScore.toFixed(2) }}%
+                </GradientText>
             </v-col>
         </v-row>
         <v-row justify="center" class="mt-4" v-if="validInput">
@@ -150,6 +155,11 @@ import CourseSearch from "../components/CourseSearch.vue";
 import PageTitle from "../components/PageTitle.vue";
 import CourseProfileUrlInput from "../components/CourseProfileUrlInput.vue";
 import { getWith1DayExpiry, setWith1DayExpiry } from "../utils/localStorageRetrieval.ts";
+import GradientText from "../components/GradientText.vue";
+import { useTheme } from "vuetify";
+const theme = useTheme();
+const fromColor = computed(() => theme.global.current.value.colors.secondaryTextGradientFrom);
+const toColor = computed(() => theme.global.current.value.colors.secondaryTextGradientTo);
 const breakpoints = useBreakpoints({
     mobile: 0,
     tablet: 600,

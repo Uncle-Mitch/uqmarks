@@ -1,9 +1,16 @@
 <template>
     <v-container class="text-center pa-5" fluid>
-        <div class="text-h3 font-weight-bold text-primary">UQMARKS Search Analytics</div>
+        <GradientText
+            :from="theme.global.current.value.colors.titleGradientFrom"
+            :to="theme.global.current.value.colors.titleGradientTo"
+            tag="h1"
+            class="text-primary text-h3 font-weight-bold"
+        >
+            Search Analytics
+        </GradientText>
         <v-container fluid class="analytics-bg mt-6">
             <v-row justify="start">
-                <v-tabs v-model="tab" class="custom-tabs" slider-color="##485fc7" align-tabs="start">
+                <v-tabs v-model="tab" class="custom-tabs" slider-color="#485fc7" align-tabs="start">
                     <v-tab value="home">Total Searches</v-tab>
                     <v-tab value="courses">Course Ranking</v-tab>
                     <v-tab value="hourly">Hourly Usage</v-tab>
@@ -31,6 +38,8 @@
 <script setup lang="ts">
 import { ref, computed } from "vue";
 import { useBreakpoints } from "@vueuse/core";
+import { useTheme } from "vuetify";
+import GradientText from "../components/GradientText.vue";
 
 const baseUrl = import.meta.env.VITE_API_BASE_URL;
 
@@ -42,12 +51,12 @@ const breakpoints = useBreakpoints({
     desktop: 1024,
 });
 const isMobile = breakpoints.smaller("tablet"); // < 600px
+const theme = useTheme();
+const from = computed(() => (theme.global.current.value.dark ? "#AF7DE0" : "#A855F7"));
+const to = computed(() => (theme.global.current.value.dark ? "#6E32A8" : "#F472B6"));
 </script>
 
 <style lang="scss" scoped>
-.custom-tabs {
-    color: #000;
-}
 .custom-tabs .v-tab {
     text-transform: none !important;
     font-weight: 500;
@@ -56,12 +65,12 @@ const isMobile = breakpoints.smaller("tablet"); // < 600px
 }
 
 .custom-tabs .v-tab--selected {
-    color: #485fc7 !important;
+    color: #9eace9 !important;
     font-weight: bold;
 }
 
 .analytics-bg {
-    background: #f4eaff;
+    background: --v-theme-surface;
     border-radius: 18px;
     margin-top: 50px;
 }
