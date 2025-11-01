@@ -94,10 +94,10 @@
                 <GradientText :from="fromColor" :to="toColor" tag="h4" class="text-primary text-h4 font-weight-bold">
                     Total Score
                 </GradientText>
-                <br></br>
+                <br />
                 <GradientText :from="fromColor" :to="toColor" tag="h4" class="text-primary text-h4 font-weight-bold">
                     {{ totalScore.toFixed(2) }}%
-                </GradientText>             
+                </GradientText>
             </v-col>
         </v-row>
     </v-container>
