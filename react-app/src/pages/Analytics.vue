@@ -86,14 +86,14 @@ const sliderStyle = computed(() => {
 }
 
 .pill-toggle {
-    background-color: rgb(var(--v-theme-surface));
+    background-color: rgb(var(--v-theme-surfacedark));
     padding: 4px;
     border-radius: 9999px;
 }
 
 .pill-toggle .v-btn {
     background-color: transparent !important;
-    color: var(--v-theme-on-surface) !important;
+    color: var(--v-theme-dark) !important;
     text-transform: none;
     font-weight: 500;
 }

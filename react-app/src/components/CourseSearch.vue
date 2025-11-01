@@ -8,7 +8,7 @@
                     label="Semester"
                     item-title="label"
                     item-value="value"
-                    rounded-xl
+                    rounded="l"
                     variant="solo-filled"
                     style="font-size: 1.25rem"
                     :hide-details="true"
@@ -23,7 +23,7 @@
                     :error-messages="errorMessage"
                     style="font-size: 5rem"
                     variant="solo-filled"
-                    rounded-xl
+                    rounded="l"
                     :loading="loading"
                     hide-details="auto"
                 >
@@ -32,10 +32,10 @@
             <v-col cols="12" md="2">
                 <v-btn
                     color="secondary"
-                    class="white--text"
                     block
                     style="height: 56px; font-size: 1.25rem"
                     type="submit"
+                    rounded="l"
                     :loading="loading"
                 >
                     Go
@@ -97,10 +97,5 @@ function onSubmit() {
     border: 2px solid #f14668 !important;
     border-radius: 8px;
     box-shadow: none;
-}
-
-::v-deep(.v-messages__message) {
-    font-weight: 600;
-    color: #fbd4c6;
 }
 </style>

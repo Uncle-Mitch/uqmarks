@@ -82,8 +82,12 @@ button:focus-visible {
 
 body,
 .v-application {
-    font-family: "Montserrat", sans-serif;
+    font-family: "Helvetica", sans-serif;
     .title {
-        font-family: "Montserrat", sans-serif !important;
+        font-family: "Helvetica", sans-serif !important;
     }
+}
+
+:deep(.v-btn .v-btn__content) {
+    text-transform: none !important;
 }
