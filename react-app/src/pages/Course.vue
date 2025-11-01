@@ -24,6 +24,22 @@
                 />
             </v-col>
         </v-row>
+        <v-row justify="center" v-if="validInput && isMobile">
+            <v-col cols="12" md="8">
+                <div class="d-flex align-start">
+                    <v-btn
+                        variant="flat"
+                        @click="() => (editingWeights = !editingWeights)"
+                        rounded="pill"
+                        color="accent"
+                        style="text-transform: none"
+                        :aria-label="editingWeights ? 'Confirm' : 'Edit Weight'"
+                        :title="editingWeights ? 'Confirm' : 'Edit Weight'"
+                        >{{ editingWeights ? "Confirm" : "Edit Weights" }}</v-btn
+                    >
+                </div>
+            </v-col>
+        </v-row>
         <v-row justify="center" v-if="validInput">
             <v-col cols="12" md="8">
                 <v-sheet elevation="2" rounded="lg" class="table-wrapper text-start">
@@ -37,17 +53,22 @@
                         items-per-page="-1"
                     >
                         <template v-slot:header.weight>
-                            <span>Weight</span>
-                            <v-icon
-                                @click="() => (editingWeights = !editingWeights)"
-                                class="clickable"
-                                style="margin-left: 10px"
-                                :aria-label="editingWeights ? 'Confirm' : 'Edit Weight'"
-                                :title="editingWeights ? 'Confirm' : 'Edit Weight'"
-                                size="x-small"
-                            >
-                                {{ editingWeights ? "fas fa-check" : "fas fa-pencil" }}
-                            </v-icon>
+                            <div class="d-flex align-center">
+                                <span>Weight</span>
+                                <v-icon
+                                    v-if="!isMobile"
+                                    @click="() => (editingWeights = !editingWeights)"
+                                    class="clickable"
+                                    style="margin-left: 10px"
+                                    :aria-label="editingWeights ? 'Confirm' : 'Edit Weight'"
+                                    :title="editingWeights ? 'Confirm' : 'Edit Weight'"
+                                    size="x-small"
+                                    color="accent"
+                                    flat
+                                >
+                                    {{ editingWeights ? "fas fa-check" : "fas fa-pencil" }}
+                                </v-icon>
+                            </div>
                         </template>
                         <template v-slot:loading>
                             <v-skeleton-loader type="table-row@4"></v-skeleton-loader>
@@ -95,7 +116,7 @@
                                     density="compact"
                                     hide-details
                                     color="secondary"
-                                    style="transform: scale(0.5); margin: 0"
+                                    style="transform: scale(0.6); margin: 0"
                                 />
                             </v-container>
                         </template>
@@ -119,7 +140,7 @@
                 <GradientText :from="fromColor" :to="toColor" tag="h4" class="text-primary text-h4 font-weight-bold">
                     Total Score
                 </GradientText>
-                <br></br>
+                <br />
                 <GradientText :from="fromColor" :to="toColor" tag="h4" class="text-primary text-h4 font-weight-bold">
                     {{ totalScore.toFixed(2) }}%
                 </GradientText>
@@ -165,7 +186,7 @@ const breakpoints = useBreakpoints({
     tablet: 600,
     desktop: 1024,
 });
-const isMobile = breakpoints.smaller("tablet");
+const isMobile = breakpoints.smallerOrEqual("tablet");
 const baseUrl = import.meta.env.VITE_API_BASE_URL;
 
 const route = useRoute();
@@ -205,12 +226,35 @@ const rules = {
     },
 };
 
-const headers = [
-    { title: "Assessment", value: "assessment", width: isMobile ? "25%" : "30%" },
-    { title: "Weight", value: "weight", width: isMobile ? "10%" : "20%" },
-    { title: "Your Score", value: "score", width: isMobile ? "35%" : "20%" },
-    { title: "", value: "enabled", width: "10%" },
-];
+const headers = computed(() => {
+    const baseHeaders = [
+        { title: "Assessment", value: "assessment", width: isMobile.value ? "30%" : "30%" },
+        { title: "Weight", value: "weight", width: isMobile.value ? "15%" : "20%" },
+    ];
+
+    // Only add "Your Score" column if not on mobile or if editing weights on mobile
+    if (!isMobile.value || !editingWeights.value) {
+        baseHeaders.push({
+            title: "Your Score",
+            value: "score",
+            width: isMobile.value ? "30%" : "20%",
+        });
+    } else {
+        baseHeaders.push({
+            title: "Your Score",
+            value: "score",
+            width: "5%",
+        });
+    }
+
+    baseHeaders.push({
+        title: "",
+        value: "enabled",
+        width: isMobile.value ? "15%" : "10%",
+    });
+
+    return baseHeaders;
+});
 const resultsHeaders = [
     { title: "Grade", value: "grade" },
     { title: "Cutoff (%)", value: "cutoff" },
@@ -379,7 +423,6 @@ function updateGradeResults(currentScore: number, totalWeight: number) {
 }
 
 function assessmentRowProps(row: any) {
-    console.log(row);
     if (row.item?.enabled === undefined) {
         return {};
     }
@@ -423,13 +466,6 @@ const weightValid = computed(() => Math.round(totalEnabledWeight.value) === 100)
     color: #333;
 }
 
-.assessment-table td,
-.assessment-table th,
-.results-wrapper td,
-.results-wrapper th {
-    padding: 16px 24px !important;
-}
-
 .results-title {
     color: #d9b3ff;
 }
@@ -456,5 +492,13 @@ const weightValid = computed(() => Math.round(totalEnabledWeight.value) === 100)
 
 .full-height {
     min-height: 100vh;
+}
+
+// Override padding for mobile
+@media (max-width: 600px) {
+    :deep(.v-data-table__td),
+    :deep(.v-data-table__th) {
+        padding: 2px 4px !important;
+    }
 }
 </style>

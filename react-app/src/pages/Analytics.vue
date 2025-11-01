@@ -10,11 +10,12 @@
         </GradientText>
         <v-container fluid class="analytics-bg mt-6">
             <v-row justify="start">
-                <v-tabs v-model="tab" class="custom-tabs" slider-color="#485fc7" align-tabs="start">
-                    <v-tab value="home">Total Searches</v-tab>
-                    <v-tab value="courses">Course Ranking</v-tab>
-                    <v-tab value="hourly">Hourly Usage</v-tab>
-                </v-tabs>
+                <v-btn-toggle v-model="tab" rounded="pill" class="pill-toggle" group>
+                    <div class="pill-slider" :style="sliderStyle"></div>
+                    <v-btn value="home" variant="flat" rounded="pill">Total Searches</v-btn>
+                    <v-btn value="courses" variant="flat" rounded="pill">Course Ranking</v-btn>
+                    <v-btn value="hourly" variant="flat" rounded="pill">Hourly Usage</v-btn>
+                </v-btn-toggle>
             </v-row>
 
             <v-row justify="center" class="mt-6">
@@ -44,7 +45,7 @@ import GradientText from "../components/GradientText.vue";
 const baseUrl = import.meta.env.VITE_API_BASE_URL;
 
 const tab = ref("home");
-const iframeSrc = computed(() => `${baseUrl}/dash/${tab.value}`);
+const iframeSrc = computed(() => `${baseUrl}/dash/${tab.value}?darkmode=${isDarkMode.value}`);
 const breakpoints = useBreakpoints({
     mobile: 0,
     tablet: 600,
@@ -52,8 +53,17 @@ const breakpoints = useBreakpoints({
 });
 const isMobile = breakpoints.smaller("tablet"); // < 600px
 const theme = useTheme();
-const from = computed(() => (theme.global.current.value.dark ? "#AF7DE0" : "#A855F7"));
-const to = computed(() => (theme.global.current.value.dark ? "#6E32A8" : "#F472B6"));
+const isDarkMode = computed(() => theme.global.current.value.dark);
+
+const buttons = ["home", "courses", "hourly"];
+const sliderStyle = computed(() => {
+    const index = buttons.indexOf(tab.value);
+    const percent = 100 / buttons.length;
+    return {
+        left: `${index * percent}%`,
+        width: `${percent}%`,
+    };
+});
 </script>
 
 <style lang="scss" scoped>
@@ -73,5 +83,24 @@ const to = computed(() => (theme.global.current.value.dark ? "#6E32A8" : "#F472B
     background: --v-theme-surface;
     border-radius: 18px;
     margin-top: 50px;
+}
+
+.pill-toggle {
+    background-color: rgb(var(--v-theme-surface));
+    padding: 4px;
+    border-radius: 9999px;
+}
+
+.pill-toggle .v-btn {
+    background-color: transparent !important;
+    color: var(--v-theme-on-surface) !important;
+    text-transform: none;
+    font-weight: 500;
+}
+
+.pill-toggle .v-btn.v-btn--active {
+    background-color: rgb(var(--v-theme-accent)) !important;
+    color: white !important;
+    box-shadow: none !important;
 }
 </style>
