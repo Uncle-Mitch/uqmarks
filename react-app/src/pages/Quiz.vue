@@ -1,7 +1,13 @@
 <template>
     <v-container class="text-center pa-5" fluid>
-        <div class="text-h3 font-weight-bold page-title">UQMARKS Quiz Calculator</div>
-
+        <GradientText
+            :from="theme.global.current.value.colors.titleGradientFrom"
+            :to="theme.global.current.value.colors.titleGradientTo"
+            tag="h1"
+            class="text-primary text-h3 font-weight-bold"
+        >
+            Quiz Calculator
+        </GradientText>
         <v-row justify="center" class="mt-8">
             <v-col cols="12" md="8">
                 <v-row class="mt-2">
@@ -85,8 +91,13 @@
 
         <v-row justify="center" class="mt-12">
             <v-col cols="12" md="5">
-                <h2 class="text-h4 font-weight-bold results-title">Results</h2>
-                <h3 class="text-h6 total-score">Total Score: {{ totalScore.toFixed(2) }}%</h3>
+                <GradientText :from="fromColor" :to="toColor" tag="h4" class="text-primary text-h4 font-weight-bold">
+                    Total Score
+                </GradientText>
+                <br />
+                <GradientText :from="fromColor" :to="toColor" tag="h4" class="text-primary text-h4 font-weight-bold">
+                    {{ totalScore.toFixed(2) }}%
+                </GradientText>
             </v-col>
         </v-row>
     </v-container>
@@ -94,6 +105,12 @@
 
 <script setup lang="ts">
 import { ref, watch, computed } from "vue";
+import { useTheme } from "vuetify";
+import GradientText from "../components/GradientText.vue";
+
+const theme = useTheme();
+const fromColor = computed(() => theme.global.current.value.colors.secondaryTextGradientFrom);
+const toColor = computed(() => theme.global.current.value.colors.secondaryTextGradientTo);
 
 interface Quiz {
     key: number;

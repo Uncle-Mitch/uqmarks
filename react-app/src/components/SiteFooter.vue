@@ -42,10 +42,9 @@
     </v-footer>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .footer {
     font-size: 0.75rem;
-    color: white;
 }
 
 strong {
@@ -53,13 +52,9 @@ strong {
 }
 
 .footer-link {
-    color: white;
     text-decoration: underline;
 }
 .footer-link:hover {
     color: #e3b3ff;
-}
-.footer-title {
-    color: white;
 }
 </style>

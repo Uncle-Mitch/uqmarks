@@ -121,7 +121,7 @@ def handle_ratelimit(e):
     
 
 @app.route('/api/semesters/', methods=['GET'])
-@cross_origin(origins=["https://www.uqmarks.com", "https://uqmarks.com"])
+@cross_origin(origins=["https://www.uqmarks.com", "https://uqmarks.com", "http://localhost:5173"])
 @limiter.limit("6/minute")
 def api_get_semesters():
     semesters = get_semester_list()
@@ -133,8 +133,8 @@ def api_get_semesters():
 
 
 @app.route('/api/getcourse/', methods=['GET'])
-@cross_origin(origins=["https://www.uqmarks.com", "https://uqmarks.com"])
-@limiter.limit("10/minute")
+@cross_origin(origins=["https://www.uqmarks.com", "https://uqmarks.com", "http://localhost:5173"])
+@limiter.limit("100/minute")
 def api_get_course():
     course_code = request.args.get('courseCode', '').upper()
     semester_id = request.args.get('semesterId', '')
@@ -202,7 +202,7 @@ def api_get_course():
         return jsonify({'success': False, 'error': DEFAULT_INVALID_TEXT}), 400
 
 @app.route('/api/announcement/', methods=['GET'])
-@cross_origin(origins=["https://www.uqmarks.com", "https://uqmarks.com"])
+@cross_origin(origins=["https://www.uqmarks.com", "https://uqmarks.com", "http://localhost:5173"])
 @limiter.limit("3/minute")
 def api_get_announcement():
 

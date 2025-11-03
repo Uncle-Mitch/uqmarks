@@ -18,7 +18,7 @@
 
             <VCardActions>
                 <VSpacer />
-                <VBtn @click="onSubmit"> Submit </VBtn>
+                <VBtn @click="onSubmit" color="secondary" variant="flat" type="submit"> Submit </VBtn>
             </VCardActions>
         </VCard>
     </v-form>
@@ -60,3 +60,4 @@ function onSubmit() {
     });
 }
 </script>
+<style scoped></style>

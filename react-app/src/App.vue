@@ -1,7 +1,7 @@
 <template>
-    <v-app class="">
+    <v-app>
         <v-container fluid fill-height class="d-flex justify-center align-center pa-0">
-            <v-main class="">
+            <v-main>
                 <NavBar />
                 <RouterView />
             </v-main>

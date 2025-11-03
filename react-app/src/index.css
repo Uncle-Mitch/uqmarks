@@ -79,3 +79,15 @@ button:focus-visible {
     background-color: #ff3a3d;
     color: #ffffff;
 }
+
+body,
+.v-application {
+    font-family: "Helvetica", sans-serif;
+    .title {
+        font-family: "Helvetica", sans-serif !important;
+    }
+}
+
+:deep(.v-btn .v-btn__content) {
+    text-transform: none !important;
+}
