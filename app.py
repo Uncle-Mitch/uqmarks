@@ -225,7 +225,8 @@ def static_proxy(path):
 
 def start_app():
     create_database(app=app)
-    app.run(debug=DEBUG_MODE)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port, debug=DEBUG_MODE)
 
 
 if __name__== '__main__':
