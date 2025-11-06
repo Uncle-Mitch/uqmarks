@@ -21,7 +21,7 @@ from datetime import datetime
 import ipaddress
 import socket
 from dotenv import load_dotenv
-from flask_cache import cache, get_semester_list, get_cached_df, get_announcement
+from flask_cache import cache, get_semester_list, get_announcement
 #from dash_app import create_dash_app
 
 
