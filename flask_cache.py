@@ -2,7 +2,7 @@ from flask_caching import Cache
 from datetime import datetime
 from pathlib import Path
 import json
-from analyse_search import load_data
+#from analyse_search import load_data
 
 cache = Cache(config={'CACHE_TYPE': 'simple', 'CACHE_DEFAULT_TIMEOUT': 300}) 
 THIS_FOLDER = Path(__file__).parent.resolve()
@@ -97,17 +97,17 @@ def get_announcement():
     cache.set("announcement", announcement, timeout=60*60*24)
     return announcement
 
-def get_cached_df():
-    """
-    Dataframe for analytics is updated every 6 hours to reduce overhead in I/O operations
-    Returns:
-        pd.Dataframe: Current  dataframe of the search activity
-    """
-    if cache.get("analytics_df") is not None:
-        return cache.get("analytics_df")
+# def get_cached_df():
+#     """
+#     Dataframe for analytics is updated every 6 hours to reduce overhead in I/O operations
+#     Returns:
+#         pd.Dataframe: Current  dataframe of the search activity
+#     """
+#     if cache.get("analytics_df") is not None:
+#         return cache.get("analytics_df")
     
-    file_path = THIS_FOLDER / "logs/search_log.txt"
-    df = load_data(file_path)
+#     file_path = THIS_FOLDER / "logs/search_log.txt"
+#     df = load_data(file_path)
 
-    cache.set("analytics_df", df, timeout=60*60*6) # Cached once every 6 hours
-    return df
+#     cache.set("analytics_df1", df, timeout=1) # Cached once every 6 hours
+#     return df

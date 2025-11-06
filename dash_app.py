@@ -1,7 +1,7 @@
 from dash import Dash, dcc, html, Input, Output, State, ctx
 from datetime import datetime as dt
 import dash_bootstrap_components as dbc
-from analyse_search import *
+#from analyse_search import *
 from flask_cache import cache, get_semester_list, get_cached_df
 from datetime import datetime
 import plotly.express as px
@@ -146,7 +146,7 @@ def create_home_callbacks(dash_app):
         State('home-aggregation-radio', 'value'),
         State('home-semester-switch','value')],
     )
-    @cache.memoize()
+    @cache.memoize(timeout=1) 
     def update_output(date_range, date_clicks, course_clicks, aggregate_clicks, semester_clicks, start_date, end_date, code, sem_text, interval, sem_lock):
         config={
             'displayModeBar': False,
