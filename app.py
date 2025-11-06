@@ -22,7 +22,7 @@ import ipaddress
 import socket
 from dotenv import load_dotenv
 from flask_cache import cache, get_semester_list, get_cached_df, get_announcement
-from dash_app import create_dash_app
+#from dash_app import create_dash_app
 
 
 load_dotenv()
@@ -49,7 +49,6 @@ class Course(db.Model):
     asmts = db.Column(db.String(4000))
     
 db.init_app(app)
-dash_app = create_dash_app(app)
 
 @app.route('/dash', methods=['GET'])
 @app.route('/dash/', methods=['GET'])
@@ -60,6 +59,7 @@ def redirect_dash():
     """
     Only allow the server to access the dash page instead of everyone
     """
+    return redirect("/")
     if request.referrer is not None and request.referrer.startswith(request.host_url):
         client_ip = request.remote_addr
 
