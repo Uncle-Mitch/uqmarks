@@ -27,7 +27,9 @@ from dash_app import create_dash_app
 
 load_dotenv()
 db = SQLAlchemy()
-DB_NAME = "course.sqlite"
+
+THIS_FOLDER = (Path(__file__).parent / "data").resolve()
+DB_NAME = THIS_FOLDER / "course.sqlite"
 app = Flask(__name__, static_folder="./react-app/dist", static_url_path="")
 app.config['SECRET_KEY'] = os.environ['SECRET_KEY']
 app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{DB_NAME}'
@@ -36,7 +38,6 @@ app.config['ENABLE_LOGGING'] = True if os.environ.get('ENABLE_LOGGING') == "T" e
 CORS(app)
 limiter = Limiter(get_remote_address, app=app)
 DEBUG_MODE = True if os.environ['DEBUG_MODE'] == "T" else False
-THIS_FOLDER = Path(__file__).parent.resolve()
 
 cache.init_app(app)
 
@@ -77,6 +78,7 @@ def get_course(code:str, semester:str, year:str, section_code:str=None):
     
     # Check if we have existing db entry for this course
     found_course = db.session.query(Course).filter_by(code=code, year=yr, semester=sem).first()
+    print(found_course)
     if found_course:
         return make_tuple(found_course.asmts)
     
@@ -202,7 +204,7 @@ def api_get_course():
         return jsonify({'success': False, 'error': DEFAULT_INVALID_TEXT}), 400
 
 @app.route('/api/announcement/', methods=['GET'])
-@cross_origin(origins=["https://www.uqmarks.com", "https://uqmarks.com", "http://localhost:5173"])
+@cross_origin(origins=["https://www.uqmarks.com", "https://uqmarks.com", "http://localhost:5173", "http://127.0.0.1:5000/"])
 @limiter.limit("3/minute")
 def api_get_announcement():
 
@@ -225,7 +227,9 @@ def static_proxy(path):
 
 def start_app():
     create_database(app=app)
-    app.run(debug=DEBUG_MODE)
+    create_search_logs_table()
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port, debug=DEBUG_MODE)
 
 
 if __name__== '__main__':

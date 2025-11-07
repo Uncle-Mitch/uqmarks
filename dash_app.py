@@ -8,6 +8,37 @@ import plotly.express as px
 from dateutil.relativedelta import relativedelta
 import time
 
+from sqlalchemy import create_engine
+import pandas as pd
+import os
+
+def get_sqlalchemy_engine():
+    """Create and return an SQLAlchemy engine for PostgreSQL."""
+    db_user = os.getenv("POSTGRES_USER")
+    db_password = os.getenv("POSTGRES_PASSWORD")
+    db_name = os.getenv("POSTGRES_DB")
+    db_host = os.getenv("POSTGRES_HOST", "localhost")
+    db_port = os.getenv("POSTGRES_PORT", 5432)
+
+    # Create the database connection string
+    db_url = f"postgresql://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}"
+    return create_engine(db_url)
+
+def get_search_logs_df():
+    """Fetch data from the search_logs table in PostgreSQL and return it as a Pandas DataFrame."""
+    query = """
+        SELECT ts AS timestamp, code, semester, year
+        FROM search_logs
+    """
+    engine = get_sqlalchemy_engine()
+    try:
+        # Use Pandas to execute the query and load the results into a DataFrame
+        df = pd.read_sql_query(query, engine)
+    except Exception as e:
+        print(f"Error fetching data from search_logs: {e}")
+        df = pd.DataFrame()  # Return an empty DataFrame in case of an error
+    return df
+
 def get_box_styles() -> tuple[dict]:
     """Returns the style dict for boxes in the analytics page
 
@@ -146,7 +177,6 @@ def create_home_callbacks(dash_app):
         State('home-aggregation-radio', 'value'),
         State('home-semester-switch','value')],
     )
-    @cache.memoize()
     def update_output(date_range, date_clicks, course_clicks, aggregate_clicks, semester_clicks, start_date, end_date, code, sem_text, interval, sem_lock):
         config={
             'displayModeBar': False,
@@ -163,7 +193,7 @@ def create_home_callbacks(dash_app):
                                                                                               semester, year, sem_lock,
                                                                                               date_range)
 
-        df = get_cached_df()
+        df = get_search_logs_df()
         df = filter_data(df, year=year, semester=semester, start_date=new_start_date_str, end_date=end_date_str)
         
         fig1, df_code_only = generate_plot(df.copy(), code, interval=interval)
