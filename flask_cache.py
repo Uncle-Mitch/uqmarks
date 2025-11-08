@@ -5,7 +5,7 @@ import json
 from analyse_search import load_data
 
 cache = Cache(config={'CACHE_TYPE': 'simple', 'CACHE_DEFAULT_TIMEOUT': 300}) 
-THIS_FOLDER = Path(__file__).parent.resolve()
+THIS_FOLDER = (Path(__file__).parent / "data").resolve()
 
 def get_semester_list():
     # check if we already cached a recent semester list (within 24 hrs)
