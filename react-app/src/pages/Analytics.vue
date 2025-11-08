@@ -45,7 +45,7 @@ import GradientText from "../components/GradientText.vue";
 const baseUrl = import.meta.env.VITE_API_BASE_URL;
 
 const tab = ref("home");
-const iframeSrc = computed(() => `${baseUrl}/dash/${tab.value}?darkmode=${isDarkMode.value}`);
+const iframeSrc = computed(() => `http://127.0.0.1:5000/dash/${tab.value}?darkmode=${isDarkMode.value}`);
 const breakpoints = useBreakpoints({
     mobile: 0,
     tablet: 600,
