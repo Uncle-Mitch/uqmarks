@@ -1,7 +1,7 @@
-name: Build and Dockerise UQMarks
+name: Build and deploy
 
 on:
-  pull_request:
+  push:
     branches: ["master"]
 
 env:
@@ -11,7 +11,7 @@ env:
 jobs:
   js-build-and-format:
     runs-on: ubuntu-latest
-    environment: preview
+    environment: production
     defaults:
       run:
         working-directory: ./react-app
@@ -46,7 +46,7 @@ jobs:
     
   docker-build:
     runs-on: ubuntu-latest
-    environment: preview
+    environment: production
     permissions:
       contents: read
       packages: write
