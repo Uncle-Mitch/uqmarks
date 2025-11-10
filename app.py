@@ -61,6 +61,7 @@ def redirect_dash():
     """
     Only allow the server to access the dash page instead of everyone
     """
+    return dash_app.index()
     if request.referrer is not None and request.referrer.startswith(request.host_url):
         client_ip = request.remote_addr
 
