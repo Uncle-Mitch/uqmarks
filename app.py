@@ -79,7 +79,6 @@ def get_course(code:str, semester:str, year:str, section_code:str=None):
     
     # Check if we have existing db entry for this course
     found_course = db.session.query(Course).filter_by(code=code, year=yr, semester=sem).first()
-    print(found_course)
     if found_course:
         return make_tuple(found_course.asmts)
     
@@ -124,7 +123,7 @@ def handle_ratelimit(e):
     
 
 @app.route('/api/semesters/', methods=['GET'])
-@cross_origin(origins=["https://www.uqmarks.com", "https://uqmarks.com", "http://localhost:5173"])
+@cross_origin(origins=["https://www.uqmarks.com", "https://uqmarks.com", "http://localhost:5173", "http://127.0.0.1:5000/"])
 @limiter.limit("6/minute")
 def api_get_semesters():
     semesters = get_semester_list()
@@ -136,7 +135,7 @@ def api_get_semesters():
 
 
 @app.route('/api/getcourse/', methods=['GET'])
-@cross_origin(origins=["https://www.uqmarks.com", "https://uqmarks.com", "http://localhost:5173"])
+@cross_origin(origins=["https://www.uqmarks.com", "https://uqmarks.com", "http://localhost:5173", "http://127.0.0.1:5000/"])
 @limiter.limit("100/minute")
 def api_get_course():
     course_code = request.args.get('courseCode', '').upper()

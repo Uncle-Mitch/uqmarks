@@ -37,4 +37,4 @@ COPY . .
 COPY --from=frontend /app/react-app/dist ./react-app/dist
 
 EXPOSE 5000
-CMD ["python", "app.py"]
+CMD ["gunicorn", "-b", "0.0.0.0:5000", "app:app"]
