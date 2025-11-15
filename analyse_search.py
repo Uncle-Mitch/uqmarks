@@ -121,15 +121,20 @@ def plot_most_frequent_codes(df:pd.DataFrame, highlight_code:str, interval="D"):
     Returns:
         px.bar: plotly express bar plot - showing top 10 most searched courses
     """
-    df, ranking, df_code_groups = analyze_frequent_codes(df, top_n=10, select_code=highlight_code)
-    df = df.reset_index()
-    del df[df.columns[0]] 
+    # df, ranking, df_code_groups = analyze_frequent_codes(df, top_n=10, select_code=highlight_code)
+    # df = df.reset_index()
+    # del df[df.columns[0]] 
 
-    # Reverse the order so #1 is on top.
-    df = df.iloc[::-1].reset_index(drop=True)
+    # # Reverse the order so #1 is on top.
+    # df = df.iloc[::-1].reset_index(drop=True)
 
-    fig = px.bar(df, x='frequency', y='code', 
-                 title='Most Frequently Searched Codes')
+    # fig = px.bar(df, x='frequency', y='code', 
+    #              title='Most Frequently Searched Codes')
+    fig = go.Figure(data=go.Bar(
+        x=df['frequency'],
+        y=df['code'],
+        orientation='h',
+    ))
     
     fig.update_layout(showlegend=False, coloraxis_showscale=False)
 
@@ -163,7 +168,7 @@ def plot_most_frequent_codes(df:pd.DataFrame, highlight_code:str, interval="D"):
                         ])
                     ) 
 
-    return fig, df_code_groups, ranking
+    return fig #, df_code_groups, ranking
 
 def generate_plot(df:pd.DataFrame, code:str, interval="D"):
     """Returns a plotly line graph of all the searches containing a given code.
@@ -182,14 +187,28 @@ def generate_plot(df:pd.DataFrame, code:str, interval="D"):
 
     df.loc[:, 'timestamp'] = pd.to_datetime(df['timestamp'], unit='s')
 
-    df_daily = group_data(df, interval).to_frame().reset_index()
-    df_daily.columns = ['timestamp', 'count']
-    df_daily['timestamp'] = pd.to_datetime(df_daily['timestamp'])  # Convert 'timestamp' back to datetime
+    # df_daily = group_data(df, interval).to_frame().reset_index()
+    # df_daily.columns = ['timestamp', 'count']
+    # df_daily['timestamp'] = pd.to_datetime(df_daily['timestamp'])  # Convert 'timestamp' back to datetime
 
 
-    fig = px.line(df_daily, x='timestamp', y='count', 
-                  title='Searches Aggregated By Day', 
-                  labels={'timestamp': 'Date', 'count': 'Number of Searches'})
+    # fig = px.line(df, x='timestamp', y='frequency', 
+    #               title='Searches Aggregated By Day', 
+    #               labels={'timestamp': 'Date', 'count': 'Number of Searches'})
+    
+    fig = go.Figure(data=go.Scattergl(
+        x=df['timestamp'],
+        y=df['frequency'],
+        mode='lines',
+        name='Search Frequency'
+    ))
+    fig.update_layout(
+        title='Searches Aggregated By Day',
+        xaxis_title='Date',
+        yaxis_title='Number of Searches',
+        plot_bgcolor='rgba(0,0,0,0)',
+        paper_bgcolor='rgba(0,0,0,0)'
+    )
     
     # Do not show "Day" of month
     if interval == "M":

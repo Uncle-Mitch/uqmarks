@@ -1,7 +1,7 @@
-name: Build and Dockerise UQMarks
+name: Build and deploy
 
 on:
-  pull_request:
+  push:
     branches: ["master"]
 
 env:
@@ -11,7 +11,7 @@ env:
 jobs:
   js-build-and-format:
     runs-on: ubuntu-latest
-    environment: preview
+    environment: production
     defaults:
       run:
         working-directory: ./react-app
@@ -46,7 +46,7 @@ jobs:
     
   docker-build:
     runs-on: ubuntu-latest
-    environment: preview
+    environment: production
     permissions:
       contents: read
       packages: write
@@ -67,9 +67,9 @@ jobs:
           echo "LOWER_IMAGE_NAME=$LOWER_IMAGE_NAME" >> $GITHUB_ENV
 
           if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-            echo "TAG=pr-${{ github.event.pull_request.number }}-build-${{ github.run_number }}" >> $GITHUB_ENV
+            echo "TAG=pr-${{ github.event.pull_request.number }}" >> $GITHUB_ENV
           else
-            echo "TAG=latest-build-${{ github.run_number }}" >> $GITHUB_ENV
+            echo "TAG=latest" >> $GITHUB_ENV
           fi
 
           echo "Building image: $LOWER_IMAGE_NAME:$TAG"
