@@ -186,17 +186,6 @@ def get_assessments(code:str, semester:str, year:str, section_code:str):
             "title" : f"{code} - NEW CODE"
         }
     ]
-    
-    #local logging of events
-    THIS_FOLDER = Path(__file__).parent
-    log_dir = THIS_FOLDER / "logs"
-    log_dir.mkdir(parents=True, exist_ok=True)  # ensure logs/ exists
-
-    log_path = log_dir / "new_log.txt"
-    with log_path.open("a") as file:
-        currentTime = int(time.time())
-        file.write(f"{currentTime}|{code}|{semester}|{year}\n")
-
     return table
 
 

@@ -8,36 +8,22 @@ import plotly.express as px
 from dateutil.relativedelta import relativedelta
 import time
 
-from sqlalchemy import create_engine, text
+from sqlalchemy import create_engine, text, func
+from db_connection import get_sqlalchemy_engine, db, SearchLogs
 import pandas as pd
 import os
 
-def get_sqlalchemy_engine():
-    """Create and return an SQLAlchemy engine for PostgreSQL."""
-    db_user = os.getenv("POSTGRES_USER")
-    db_password = os.getenv("POSTGRES_PASSWORD")
-    db_name = os.getenv("POSTGRES_DB")
-    db_host = os.getenv("POSTGRES_HOST", "localhost")
-    db_port = os.getenv("POSTGRES_PORT", 5432)
-
-    # Create the database connection string
-    db_url = f"postgresql://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}"
-    return create_engine(db_url)
-
 def get_search_logs_df():
     """Fetch data from the search_logs table in PostgreSQL and return it as a Pandas DataFrame."""
-    query = """
-        SELECT ts AS timestamp, code, semester, year
-        FROM search_logs
-    """
-    engine = get_sqlalchemy_engine()
-    try:
-        # Use Pandas to execute the query and load the results into a DataFrame
-        df = pd.read_sql_query(query, engine)
-    except Exception as e:
-        print(f"Error fetching data from search_logs: {e}")
-        df = pd.DataFrame()  # Return an empty DataFrame in case of an error
-    return df
+    query = db.session.query(
+        SearchLogs.ts.label("timestamp"),
+        SearchLogs.code,
+        SearchLogs.semester,
+        SearchLogs.year
+    )
+    with db.engine.connect() as conn:
+        return pd.read_sql(query.statement, conn)
+    
 
 def group_data_from_db(engine, interval='D'):
     """
@@ -61,21 +47,19 @@ def group_data_from_db(engine, interval='D'):
     if interval not in interval_map:
         raise ValueError(f"Unsupported interval: {interval}. Use one of {list(interval_map.keys())}.")
 
-    # SQL query to group data by the specified interval
-    query = f"""
-        SELECT date_trunc('{interval_map[interval]}', ts) AS timestamp,
-               COUNT(*) AS frequency
-        FROM search_logs
-        WHERE ts IS NOT NULL
-        GROUP BY timestamp
-        ORDER BY timestamp;
-    """
+    trunc_unit = interval_map[interval]
 
-    # Execute the query and load the results into a Pandas DataFrame
-    with engine.connect() as conn:
-        grouped_data = pd.read_sql_query(query, conn)
-
-    return grouped_data
+    query = (
+        db.session.query(
+            func.date_trunc(trunc_unit, SearchLogs.ts).label("timestamp"),
+            func.count().label("frequency")
+        )
+        .filter(SearchLogs.ts.isnot(None))
+        .group_by(func.date_trunc(trunc_unit, SearchLogs.ts))
+        .order_by(func.date_trunc(trunc_unit, SearchLogs.ts))
+    )
+    with db.engine.connect() as conn:
+        return pd.read_sql(query.statement, conn)
 
 def get_most_searched_course(engine, limit=1):
     """

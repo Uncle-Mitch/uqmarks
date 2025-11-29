@@ -2,10 +2,17 @@ from flask_caching import Cache
 from datetime import datetime
 from pathlib import Path
 import json
+from flask import current_app
 from analyse_search import load_data
 
 cache = Cache(config={'CACHE_TYPE': 'simple', 'CACHE_DEFAULT_TIMEOUT': 300}) 
 THIS_FOLDER = (Path(__file__).parent / "data").resolve()
+
+def init_cache(app):
+    """
+    Initialize the cache with the Flask app.
+    """
+    cache.init_app(app, config={'CACHE_TYPE': 'simple', 'CACHE_DEFAULT_TIMEOUT': 300})
 
 def get_semester_list():
     # check if we already cached a recent semester list (within 24 hrs)
