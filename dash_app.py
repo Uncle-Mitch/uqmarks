@@ -9,7 +9,7 @@ from dateutil.relativedelta import relativedelta
 import time
 
 from sqlalchemy import create_engine, text, func
-from db_connection import get_sqlalchemy_engine, db, SearchLogs
+from db_connection import get_sqlalchemy_engine, db, SearchLogs, Course
 import pandas as pd
 import os
 
@@ -71,16 +71,41 @@ def get_most_searched_course(engine, limit=1):
     Returns:
     - A tuple containing the most searched course code and its frequency.
     """
-    query = text(f"""
-        SELECT code, COUNT(*) AS frequency
-        FROM search_logs
-        GROUP BY code
-        ORDER BY frequency DESC
-        LIMIT {limit};
-    """)
-    with engine.connect() as conn:
-        df = pd.read_sql_query(query, conn)
+
+    query = (
+        db.session.query(
+            SearchLogs.code.label("code"),
+            func.count().label("frequency")
+        )
+        .group_by(SearchLogs.code)
+        .order_by(func.count().desc())
+        .limit(limit))
+
+    with db.engine.connect() as conn:
+        df = pd.read_sql(query.statement, conn)
+
     return df
+
+def get_num_unique_courses():
+    """Return the number of unique course codes."""
+    return db.session.query(db.func.count(db.func.distinct(Course.code))).scalar()
+
+def get_median_searches_per_course():
+    """Return the median number of searches per course."""
+    subquery = (
+        db.session.query(
+            SearchLogs.code,
+            db.func.count(SearchLogs.id).label("cnt")
+        )
+        .group_by(SearchLogs.code)
+        .subquery()
+    )
+
+    median_query = db.session.query(
+        db.func.percentile_cont(0.5).within_group(subquery.c.cnt)
+    )
+
+    return median_query.scalar()
 
 def get_box_styles() -> tuple[dict]:
     """Returns the style dict for boxes in the analytics page
@@ -247,7 +272,7 @@ def create_home_callbacks(dash_app):
         ]
         
         fig1, df_code_only = generate_plot(grouped_df.copy(), code, interval=interval)
-        most_searched_course, frequency = "abc", 1 #get_most_searched_course(engine)
+        most_searched_course, frequency =  get_most_searched_course(engine, 1).iloc[0]
 
         # Calculate number of days in timeframe
         if end_date is None:
@@ -364,8 +389,8 @@ def create_courses_callbacks(dash_app):
 
         box_style, left_box_style, middle_box_style, right_box_style = get_box_styles()
 
-        num_courses = 1 #df_frequency.shape[0]
-        median_num_searches = 1#df_frequency['frequency'].median()
+        num_courses = get_num_unique_courses()
+        median_num_searches = get_median_searches_per_course()
         # total_searches = df.shape[0]
         # Get % of searches from the top 50 courses
         top_10_percent = 1 #df_frequency.iloc[0:50]['frequency'].sum() / total_searches
