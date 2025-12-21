@@ -14,7 +14,7 @@ services:
   db:
     image: postgres:15
     environment:
-      TZ: Australia/Brisbane
+      TZ: UTC
     env_file:
       - .env
     volumes:

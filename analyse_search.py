@@ -162,9 +162,11 @@ def plot_most_frequent_codes(df:pd.DataFrame, highlight_code:str, interval="D"):
                         font=dict(color='black'))
                     )
 
+    # Suppress the default trace name ("trace 0") in hover by adding <extra></extra>.
     fig.update_traces(hovertemplate="<br>".join([
                             "Searches: <b>%{x}</b>",
-                            "Course: <b>%{y}</b>"
+                            "Course: <b>%{y}</b>",
+                            "<extra></extra>"
                         ])
                     ) 
 
@@ -181,10 +183,6 @@ def generate_plot(df:pd.DataFrame, code:str, interval="D"):
     Returns:
         px.line: plotly express line graph - a graph of date vs searches in every interval
     """
-    if code and len(code) == 8:
-        code = code.upper()
-        df = search_data(df, code)
-
     df.loc[:, 'timestamp'] = pd.to_datetime(df['timestamp'], unit='s')
 
     # df_daily = group_data(df, interval).to_frame().reset_index()
@@ -250,30 +248,49 @@ def generate_plot(df:pd.DataFrame, code:str, interval="D"):
 def gen_hourly_heatmap(df, code=None):
     """
     """
-    if code and len(code) == 8:
-        code = code.upper()
-        df = search_data(df, code)
+    # if code and len(code) == 8:
+    #     code = code.upper()
+    #     df = search_data(df, code)
 
-    df = df.copy()
-    df['timestamp'] = pd.to_datetime(df['timestamp'], unit='s')
+    # df = df.copy()
+    # df['timestamp'] = pd.to_datetime(df['timestamp'], unit='s')
     
-    selected_timezone = 'Australia/Brisbane'
-    df['timestamp'] = df['timestamp'].dt.tz_localize('UTC').dt.tz_convert(selected_timezone)
+    # selected_timezone = 'Australia/Brisbane'
+    # df['timestamp'] = df['timestamp'].dt.tz_localize('UTC').dt.tz_convert(selected_timezone)
 
-    df['day_of_week'] = df['timestamp'].dt.day_name()
-    df['hour'] = df['timestamp'].dt.hour
+    # df['day_of_week'] = df['timestamp'].dt.day_name()
+    # df['hour'] = df['timestamp'].dt.hour
 
-    all_hours = [x for x in range(24)]
-    day_order = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+    # all_hours = [x for x in range(24)]
+    # day_order = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
 
-    heatmap_data = df.groupby(['day_of_week', 'hour']).size().reset_index(name='frequency')
-    grid = pd.MultiIndex.from_product([day_order, all_hours], names=['day_of_week', 'hour']).to_frame(index=False)
+    # heatmap_data = df.groupby(['day_of_week', 'hour']).size().reset_index(name='frequency')
+    # grid = pd.MultiIndex.from_product([day_order, all_hours], names=['day_of_week', 'hour']).to_frame(index=False)
 
     # Merge the grid with the existing data
-    heatmap_data = pd.merge(grid, heatmap_data, how='left', on=['day_of_week', 'hour'])
-    heatmap_data = heatmap_data.fillna(value=0)
+    grid = pd.MultiIndex.from_product(
+        [range(7), range(24)],
+        names=['dow', 'hour']
+    ).to_frame(index=False)
 
-    day_order.reverse() # Ensure monday is on top.
+    # Right/left join doesn’t matter here as long as grid is preserved
+    heatmap_data = pd.merge(grid, df, how='left', on=['dow', 'hour'])
+    heatmap_data['frequency'] = heatmap_data['frequency'].fillna(0)
+
+    # Map dow → day name and set display order
+    dow_to_name = {
+        0: 'Sunday',
+        1: 'Monday',
+        2: 'Tuesday',
+        3: 'Wednesday',
+        4: 'Thursday',
+        5: 'Friday',
+        6: 'Saturday',
+    }
+    heatmap_data['day_of_week'] = heatmap_data['dow'].map(dow_to_name)
+
+    day_order = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+    day_order.reverse()  # if you still want Monday at top
 
     fig = go.Figure(data=go.Heatmap(
         z=heatmap_data['frequency'],
