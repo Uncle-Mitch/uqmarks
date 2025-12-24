@@ -17,8 +17,8 @@ def get_search_logs_df(year=None, semester=None, start_date=None, end_date=None)
     """Fetch data from the search_logs table in PostgreSQL and return it as a Pandas DataFrame."""
     local_ts = (
         SearchLogs.ts
-            .op("AT TIME ZONE")("UTC")                  # tell Postgres ts is UTC
-            .op("AT TIME ZONE")("Australia/Brisbane")  # convert to Brisbane
+            .op("AT TIME ZONE")("UTC") 
+            .op("AT TIME ZONE")("Australia/Brisbane")
     )
 
     dow = func.extract('dow', local_ts).cast(Integer).label('dow')
@@ -68,9 +68,15 @@ def group_data_from_db(engine, year=None, semester=None, interval='D', start_dat
         raise ValueError(f"Unsupported interval: {interval}. Use one of {list(interval_map.keys())}.")
 
     trunc_unit = interval_map[interval]
+    local_ts = (
+        SearchLogs.ts
+            .op("AT TIME ZONE")("UTC")
+            .op("AT TIME ZONE")("Australia/Brisbane")
+    )
+    trunc_ts = func.date_trunc(trunc_unit, local_ts)
 
     query = db.session.query(
-            func.date_trunc(trunc_unit, SearchLogs.ts).label("timestamp"),
+            trunc_ts.label("timestamp"),
             func.count().label("frequency")
         )
     
@@ -88,8 +94,8 @@ def group_data_from_db(engine, year=None, semester=None, interval='D', start_dat
 
     query = (query
         .filter(SearchLogs.ts.isnot(None))
-        .group_by(func.date_trunc(trunc_unit, SearchLogs.ts))
-        .order_by(func.date_trunc(trunc_unit, SearchLogs.ts))
+        .group_by(trunc_ts)
+        .order_by(trunc_ts)
     )
     with db.engine.connect() as conn:
         return pd.read_sql(query.statement, conn)
