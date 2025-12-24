@@ -15,7 +15,11 @@ import os
 
 def get_search_logs_df(year=None, semester=None, start_date=None, end_date=None):
     """Fetch data from the search_logs table in PostgreSQL and return it as a Pandas DataFrame."""
-    local_ts = SearchLogs.ts.op("AT TIME ZONE")("UTC")
+    local_ts = (
+        SearchLogs.ts
+            .op("AT TIME ZONE")("UTC")                  # tell Postgres ts is UTC
+            .op("AT TIME ZONE")("Australia/Brisbane")  # convert to Brisbane
+    )
 
     dow = func.extract('dow', local_ts).cast(Integer).label('dow')
     hour = func.extract('hour', local_ts).cast(Integer).label('hour')
@@ -372,10 +376,7 @@ def create_home_callbacks(dash_app):
         box_style, left_box_style, middle_box_style, right_box_style = get_box_styles()
 
         middle_box_text = "Most Searched Course"
-        middle_box_value = most_searched_course #df_frequency.loc[df_frequency['frequency'].idxmax(), 'code']
-        # if ranking is not None:
-        #     middle_box_text = f"{code.upper()} ranking"
-        #     middle_box_value = f"#{ranking}"
+        middle_box_value = most_searched_course
         
         # Overview statistics
         total_searches = grouped_df['frequency'].sum()
@@ -476,7 +477,6 @@ def create_courses_callbacks(dash_app):
         df = df.iloc[::-1].reset_index(drop=True)
         
         fig2 = plot_most_frequent_codes(df, code)
-        df_frequency, ranking = None, ""
 
         box_style, left_box_style, middle_box_style, right_box_style = get_box_styles()
 
