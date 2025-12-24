@@ -1,14 +1,16 @@
 services:
   app:
-    image: ghcr.io/uncle-mitch/uqmarks:latest
+    build:
+      context: .
+      dockerfile: dockerfile
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL}
     ports:
-      - "80:5000"
+      - "5000:5000"
     env_file:
       - .env
     volumes:
       - ./data:/app/data
-    depends_on:
-      - db
   db:
     image: postgres:15
     ports:
