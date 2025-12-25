@@ -121,15 +121,6 @@ def plot_most_frequent_codes(df:pd.DataFrame, highlight_code:str, interval="D"):
     Returns:
         px.bar: plotly express bar plot - showing top 10 most searched courses
     """
-    # df, ranking, df_code_groups = analyze_frequent_codes(df, top_n=10, select_code=highlight_code)
-    # df = df.reset_index()
-    # del df[df.columns[0]] 
-
-    # # Reverse the order so #1 is on top.
-    # df = df.iloc[::-1].reset_index(drop=True)
-
-    # fig = px.bar(df, x='frequency', y='code', 
-    #              title='Most Frequently Searched Codes')
     fig = go.Figure(data=go.Bar(
         x=df['frequency'],
         y=df['code'],
@@ -185,15 +176,6 @@ def generate_plot(df:pd.DataFrame, code:str, interval="D"):
     """
     df.loc[:, 'timestamp'] = pd.to_datetime(df['timestamp'], unit='s')
 
-    # df_daily = group_data(df, interval).to_frame().reset_index()
-    # df_daily.columns = ['timestamp', 'count']
-    # df_daily['timestamp'] = pd.to_datetime(df_daily['timestamp'])  # Convert 'timestamp' back to datetime
-
-
-    # fig = px.line(df, x='timestamp', y='frequency', 
-    #               title='Searches Aggregated By Day', 
-    #               labels={'timestamp': 'Date', 'count': 'Number of Searches'})
-    
     fig = go.Figure(data=go.Scattergl(
         x=df['timestamp'],
         y=df['frequency'],
@@ -248,26 +230,6 @@ def generate_plot(df:pd.DataFrame, code:str, interval="D"):
 def gen_hourly_heatmap(df, code=None):
     """
     """
-    # if code and len(code) == 8:
-    #     code = code.upper()
-    #     df = search_data(df, code)
-
-    # df = df.copy()
-    # df['timestamp'] = pd.to_datetime(df['timestamp'], unit='s')
-    
-    # selected_timezone = 'Australia/Brisbane'
-    # df['timestamp'] = df['timestamp'].dt.tz_localize('UTC').dt.tz_convert(selected_timezone)
-
-    # df['day_of_week'] = df['timestamp'].dt.day_name()
-    # df['hour'] = df['timestamp'].dt.hour
-
-    # all_hours = [x for x in range(24)]
-    # day_order = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
-
-    # heatmap_data = df.groupby(['day_of_week', 'hour']).size().reset_index(name='frequency')
-    # grid = pd.MultiIndex.from_product([day_order, all_hours], names=['day_of_week', 'hour']).to_frame(index=False)
-
-    # Merge the grid with the existing data
     grid = pd.MultiIndex.from_product(
         [range(7), range(24)],
         names=['dow', 'hour']
