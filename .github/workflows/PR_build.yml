@@ -74,9 +74,16 @@ jobs:
 
           echo "Building image: $LOWER_IMAGE_NAME:$TAG"
 
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v5
+      - name: Build Docker image
+        run: |
+          docker build -t "$LOWER_IMAGE_NAME:$TAG" .
+
+      - name: Save Docker image to tar
+        run: |
+          docker save "$LOWER_IMAGE_NAME:$TAG" -o uqmarks-image.tar
+
+      - name: Upload Docker image artifact
+        uses: actions/upload-artifact@v4
         with:
-          context: .
-          push: true
-          tags: ${{ env.LOWER_IMAGE_NAME }}:${{ env.TAG }}
+          name: uqmarks-docker-image
+          path: uqmarks-image.tar
