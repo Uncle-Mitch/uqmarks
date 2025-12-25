@@ -43,7 +43,7 @@ jobs:
 
       - name: Run TypeScript typecheck
         run: npm run typecheck
-    
+
   docker-build:
     runs-on: ubuntu-latest
     environment: production
@@ -80,3 +80,16 @@ jobs:
           context: .
           push: true
           tags: ${{ env.LOWER_IMAGE_NAME }}:${{ env.TAG }}
+
+  deploy:
+    needs: docker-build
+    runs-on: ubuntu-latest
+    steps:
+      - name: SSH deploy
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            /root/deploy.sh

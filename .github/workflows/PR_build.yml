@@ -43,7 +43,7 @@ jobs:
 
       - name: Run TypeScript typecheck
         run: npm run typecheck
-    
+
   docker-build:
     runs-on: ubuntu-latest
     environment: preview
