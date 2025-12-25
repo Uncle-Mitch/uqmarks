@@ -21,34 +21,30 @@ from datetime import datetime
 import ipaddress
 import socket
 from dotenv import load_dotenv
-from flask_cache import cache, get_semester_list, get_cached_df, get_announcement
+from flask_cache import cache, get_semester_list, get_cached_df, get_announcement, init_cache
 from dash_app import create_dash_app
+from db_connection import db, Course, SearchLogs, create_database
 
 
 load_dotenv()
-db = SQLAlchemy()
-DB_NAME = "course.sqlite"
+
+THIS_FOLDER = (Path(__file__).parent / "data").resolve()
+DB_NAME = THIS_FOLDER / "course.sqlite"
 app = Flask(__name__, static_folder="./react-app/dist", static_url_path="")
 app.config['SECRET_KEY'] = os.environ['SECRET_KEY']
-app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{DB_NAME}'
+app.config['SQLALCHEMY_DATABASE_URI'] = f"postgresql://{os.getenv('POSTGRES_USER')}:{os.getenv('POSTGRES_PASSWORD')}@{os.getenv('POSTGRES_HOST', 'localhost')}:{os.getenv('POSTGRES_PORT', 5432)}/{os.getenv('POSTGRES_DB')}"
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['ENABLE_LOGGING'] = True if os.environ.get('ENABLE_LOGGING') == "T" else False
 CORS(app)
 limiter = Limiter(get_remote_address, app=app)
 DEBUG_MODE = True if os.environ['DEBUG_MODE'] == "T" else False
-THIS_FOLDER = Path(__file__).parent.resolve()
 
 cache.init_app(app)
 
 DEFAULT_INVALID_TEXT = "The ECP is currently unavailable or the code is invalid"
-
-class Course(db.Model):
-    code = db.Column(db.String(8), primary_key=True)
-    semester = db.Column(db.Integer, primary_key=True)
-    year = db.Column(db.Integer, primary_key=True)
-    asmts = db.Column(db.String(4000))
     
 db.init_app(app)
+create_database(app=app)
 dash_app = create_dash_app(app)
 
 @app.route('/dash', methods=['GET'])
@@ -60,6 +56,7 @@ def redirect_dash():
     """
     Only allow the server to access the dash page instead of everyone
     """
+    return dash_app.index()
     if request.referrer is not None and request.referrer.startswith(request.host_url):
         client_ip = request.remote_addr
 
@@ -96,11 +93,6 @@ def get_course(code:str, semester:str, year:str, section_code:str=None):
         pass
     return weightings
 
-def create_database(app):
-    if not path.exists(DB_NAME):
-        with app.app_context():
-            db.create_all()
-
 def is_valid_course_code(code):
     return bool(re.match(r"^[A-Za-z]{4}[0-9]{4}$", code))
 
@@ -121,7 +113,7 @@ def handle_ratelimit(e):
     
 
 @app.route('/api/semesters/', methods=['GET'])
-@cross_origin(origins=["https://www.uqmarks.com", "https://uqmarks.com", "http://localhost:5173"])
+@cross_origin(origins=["https://www.uqmarks.com", "https://uqmarks.com", "http://localhost:5173", "http://127.0.0.1:5000/"])
 @limiter.limit("6/minute")
 def api_get_semesters():
     semesters = get_semester_list()
@@ -133,7 +125,7 @@ def api_get_semesters():
 
 
 @app.route('/api/getcourse/', methods=['GET'])
-@cross_origin(origins=["https://www.uqmarks.com", "https://uqmarks.com", "http://localhost:5173"])
+@cross_origin(origins=["https://www.uqmarks.com", "https://uqmarks.com", "http://localhost:5173", "http://127.0.0.1:5000/"])
 @limiter.limit("100/minute")
 def api_get_course():
     course_code = request.args.get('courseCode', '').upper()
@@ -202,7 +194,7 @@ def api_get_course():
         return jsonify({'success': False, 'error': DEFAULT_INVALID_TEXT}), 400
 
 @app.route('/api/announcement/', methods=['GET'])
-@cross_origin(origins=["https://www.uqmarks.com", "https://uqmarks.com", "http://localhost:5173"])
+@cross_origin(origins=["https://www.uqmarks.com", "https://uqmarks.com", "http://localhost:5173", "http://127.0.0.1:5000/"])
 @limiter.limit("3/minute")
 def api_get_announcement():
 
@@ -224,8 +216,8 @@ def static_proxy(path):
         return send_from_directory(app.static_folder, 'index.html')
 
 def start_app():
-    create_database(app=app)
-    app.run(debug=DEBUG_MODE)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port, debug=DEBUG_MODE)
 
 
 if __name__== '__main__':

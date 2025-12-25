@@ -2,10 +2,17 @@ from flask_caching import Cache
 from datetime import datetime
 from pathlib import Path
 import json
+from flask import current_app
 from analyse_search import load_data
 
 cache = Cache(config={'CACHE_TYPE': 'simple', 'CACHE_DEFAULT_TIMEOUT': 300}) 
-THIS_FOLDER = Path(__file__).parent.resolve()
+THIS_FOLDER = (Path(__file__).parent / "data").resolve()
+
+def init_cache(app):
+    """
+    Initialize the cache with the Flask app.
+    """
+    cache.init_app(app, config={'CACHE_TYPE': 'simple', 'CACHE_DEFAULT_TIMEOUT': 300})
 
 def get_semester_list():
     # check if we already cached a recent semester list (within 24 hrs)
@@ -43,13 +50,15 @@ def get_semester_list():
         updated = True
         
     # if current month is between december and february, then semester 3 is the current semester
-    if (current_month >= 12) or (current_month <= 2) and latest_sem != 3:
-        # should be the year that month 12 is in
-        if current_month == 12 and latest_year == current_year:
-            current_data.insert(0,{'year': current_year, 'semester': 3})
+    if current_month == 12:
+        # Summer for current year
+        if latest_sem != 3 or latest_year != current_year:
+            current_data.insert(0, {'year': current_year, 'semester': 3})
             updated = True
-        elif latest_year == (current_year - 1):
-            current_data.insert(0,{'year': current_year-1, 'semester': 3})
+    elif current_month <= 2:
+        # Summer belongs to previous year
+        if latest_sem != 3 or latest_year != current_year - 1:
+            current_data.insert(0, {'year': current_year - 1, 'semester': 3})
             updated = True
         
     # add new data to semesters.json, else read from file
