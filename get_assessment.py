@@ -7,7 +7,7 @@ import pandas as pd
 from pathlib import Path
 
 
-THIS_FOLDER = Path(__file__).parent.resolve()
+THIS_FOLDER = (Path(__file__).parent / "data").resolve()
 
 class CourseMissingError(Exception):
     def __init__(self, course: str):
@@ -186,12 +186,6 @@ def get_assessments(code:str, semester:str, year:str, section_code:str):
             "title" : f"{code} - NEW CODE"
         }
     ]
-    
-    #local logging of events
-    with open(THIS_FOLDER / "logs/new_log.txt","a") as file:
-        currentTime = int(time.time())
-        file.write(f"{currentTime}|{code}|{semester}|{year}\n")
-
     return table
 
 

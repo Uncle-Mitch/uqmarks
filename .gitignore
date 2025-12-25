@@ -136,9 +136,11 @@ course.sqlite
 course_data/
 
 logs/
+data/
 semesters.json
 index.md
 announcement.json
 
 .env.development
 .env.production
+.DS_Store

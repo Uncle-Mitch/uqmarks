@@ -8,6 +8,209 @@ import plotly.express as px
 from dateutil.relativedelta import relativedelta
 import time
 
+from sqlalchemy import create_engine, text, func, Integer
+from db_connection import get_sqlalchemy_engine, db, SearchLogs, Course
+import pandas as pd
+import os
+
+@cache.memoize(timeout=3600)
+def get_search_logs_df(year=None, semester=None, start_date=None, end_date=None):
+    """Fetch data from the search_logs table in PostgreSQL and return it as a Pandas DataFrame."""
+    local_ts = (
+        SearchLogs.ts
+            .op("AT TIME ZONE")("UTC") 
+            .op("AT TIME ZONE")("Australia/Brisbane")
+    )
+
+    dow = func.extract('dow', local_ts).cast(Integer).label('dow')
+    hour = func.extract('hour', local_ts).cast(Integer).label('hour')
+
+    query = db.session.query(
+        dow,
+        hour,
+        func.count(SearchLogs.id).label("frequency"),
+    ).filter(SearchLogs.ts.isnot(None))
+    if year is not None:
+        query = query.filter(SearchLogs.year == year)
+    if semester is not None:
+        query = query.filter(SearchLogs.semester == semester)
+    
+    if start_date is not None:
+        query = query.filter(SearchLogs.ts >= start_date)
+    if end_date is not None:
+        query = query.filter(SearchLogs.ts <= end_date)
+
+    query = query.group_by(dow, hour).order_by(dow, hour)
+
+    with db.engine.connect() as conn:
+        return pd.read_sql(query.statement, conn)
+    
+@cache.memoize(timeout=3600)
+def group_data_from_db(engine, year=None, semester=None, interval='D', start_date=None, end_date=None, code=None):
+    """
+    Group data at the database level based on the specified interval.
+
+    Parameters:
+    - engine: SQLAlchemy engine connected to the PostgreSQL database.
+    - interval (str): The interval for grouping. Defaults to 'D' (day).
+      Possible values: 'D' for day, 'W' for week, 'M' for month, 'H' for hour, etc.
+
+    Returns:
+    - DataFrame: A Pandas DataFrame containing the grouped data.
+    """
+    # Map interval to PostgreSQL date_trunc function
+    interval_map = {
+        'D': 'day',
+        'W': 'week',
+        'M': 'month',
+        'H': 'hour'
+    }
+    if interval not in interval_map:
+        raise ValueError(f"Unsupported interval: {interval}. Use one of {list(interval_map.keys())}.")
+
+    trunc_unit = interval_map[interval]
+    local_ts = (
+        SearchLogs.ts
+            .op("AT TIME ZONE")("UTC")
+            .op("AT TIME ZONE")("Australia/Brisbane")
+    )
+    trunc_ts = func.date_trunc(trunc_unit, local_ts)
+
+    query = db.session.query(
+            trunc_ts.label("timestamp"),
+            func.count().label("frequency")
+        )
+    
+    if year is not None:
+        query = query.filter(SearchLogs.year == year)
+    if semester is not None:
+        query = query.filter(SearchLogs.semester == semester)
+    
+    if start_date is not None:
+        query = query.filter(SearchLogs.ts >= start_date)
+    if end_date is not None:
+        query = query.filter(SearchLogs.ts <= end_date)
+    if code is not None:
+        query = query.filter(SearchLogs.code == code)
+
+    query = (query
+        .filter(SearchLogs.ts.isnot(None))
+        .group_by(trunc_ts)
+        .order_by(trunc_ts)
+    )
+    with db.engine.connect() as conn:
+        return pd.read_sql(query.statement, conn)
+
+@cache.memoize(timeout=3600)
+def get_most_searched_course(engine, year=None, semester=None, limit=1, code=None):
+    """
+    Query the database to find the most searched course.
+
+    Parameters:
+    - engine: SQLAlchemy engine connected to the PostgreSQL database.
+
+    Returns:
+    - A tuple containing the most searched course code and its frequency.
+    """
+
+    base_query = db.session.query(
+            SearchLogs.code.label("code"),
+            func.count().label("frequency")
+    )
+
+    if year is not None:
+        base_query = base_query.filter(SearchLogs.year == year)
+    if semester is not None:
+        base_query = base_query.filter(SearchLogs.semester == semester)
+
+    query = (
+        base_query.group_by(SearchLogs.code)
+             .order_by(func.count().desc())
+             .limit(limit)
+    )
+
+    with db.engine.connect() as conn:
+        df = pd.read_sql(query.statement, conn)
+    
+    if code is None or code in df['code'].values:
+        return df
+    
+    code_query = base_query.group_by(SearchLogs.code).filter(SearchLogs.code == code).limit(1)
+
+    with db.engine.connect() as conn:
+        code_df = pd.read_sql(code_query.statement, conn)
+
+    return pd.concat([df, code_df], ignore_index=True)
+
+@cache.memoize(timeout=3600)
+def get_num_unique_courses():
+    """Return the number of unique course codes."""
+    return db.session.query(db.func.count(db.func.distinct(Course.code))).scalar()
+
+@cache.memoize(timeout=3600)
+def get_median_searches_per_course(year=None, semester=None):
+    """Return the median number of searches per course."""
+    subquery = db.session.query(
+        SearchLogs.code,
+        db.func.count(SearchLogs.id).label("cnt")
+    )
+
+    if year is not None:
+        subquery = subquery.filter(SearchLogs.year == year)
+    if semester is not None:
+        subquery = subquery.filter(SearchLogs.semester == semester)
+
+    subquery = (
+        subquery.group_by(SearchLogs.code)
+                .subquery()
+    )
+
+    median_query = db.session.query(
+        db.func.percentile_cont(0.5).within_group(subquery.c.cnt)
+    )
+
+    return median_query.scalar()
+
+@cache.memoize(timeout=3600)
+def get_searches_for_top_50_courses(year=None, semester=None):
+    """Return percentage of searches from the top 50 courses."""
+
+    base_query = db.session.query(SearchLogs)
+
+    if year is not None:
+        base_query = base_query.filter(SearchLogs.year == year)
+    if semester is not None:
+        base_query = base_query.filter(SearchLogs.semester == semester)
+
+    total_searches = base_query.count()
+
+    if total_searches == 0:
+        return 0
+
+    subquery = (
+        db.session.query(
+            SearchLogs.code,
+            db.func.count(SearchLogs.id).label("cnt")
+        )
+        .filter(
+            *(f for f in [
+                SearchLogs.year == year if year is not None else None,
+                SearchLogs.semester == semester if semester is not None else None,
+            ] if f is not None)
+        )
+        .group_by(SearchLogs.code)
+        .order_by(db.desc("cnt"))
+        .limit(50)
+        .subquery()
+    )
+
+    top_50_searches = (
+        db.session.query(db.func.sum(subquery.c.cnt))
+        .scalar()
+    )
+
+    return top_50_searches / total_searches
+
 def get_box_styles() -> tuple[dict]:
     """Returns the style dict for boxes in the analytics page
 
@@ -146,8 +349,8 @@ def create_home_callbacks(dash_app):
         State('home-aggregation-radio', 'value'),
         State('home-semester-switch','value')],
     )
-    @cache.memoize()
     def update_output(date_range, date_clicks, course_clicks, aggregate_clicks, semester_clicks, start_date, end_date, code, sem_text, interval, sem_lock):
+        start_time = time.time()
         config={
             'displayModeBar': False,
             'displaylogo': False,                                       
@@ -163,11 +366,15 @@ def create_home_callbacks(dash_app):
                                                                                               semester, year, sem_lock,
                                                                                               date_range)
 
-        df = get_cached_df()
-        df = filter_data(df, year=year, semester=semester, start_date=new_start_date_str, end_date=end_date_str)
+        engine = get_sqlalchemy_engine()
+        if code and len(code) == 8:
+            code = code.upper()
+        else:
+            code = None
+        grouped_df = group_data_from_db(engine, year=year, semester=semester, interval=interval, start_date=new_start_date_str, end_date=end_date_str, code=code)
         
-        fig1, df_code_only = generate_plot(df.copy(), code, interval=interval)
-        fig2, df_frequency, ranking = plot_most_frequent_codes(df.copy(), code, interval=interval)
+        fig1, df_code_only = generate_plot(grouped_df.copy(), code, interval=interval)
+        most_searched_course, frequency =  get_most_searched_course(engine, year=year, semester=semester, limit=1, code=code).iloc[0]
 
         # Calculate number of days in timeframe
         if end_date is None:
@@ -180,13 +387,10 @@ def create_home_callbacks(dash_app):
         box_style, left_box_style, middle_box_style, right_box_style = get_box_styles()
 
         middle_box_text = "Most Searched Course"
-        middle_box_value = df_frequency.loc[df_frequency['frequency'].idxmax(), 'code']
-        if ranking is not None:
-            middle_box_text = f"{code.upper()} ranking"
-            middle_box_value = f"#{ranking}"
+        middle_box_value = most_searched_course
         
         # Overview statistics
-        total_searches = len(df_code_only)
+        total_searches = grouped_df['frequency'].sum()
         average_per_day = total_searches / days_elapsed
     
         content = html.Div([
@@ -233,6 +437,8 @@ def create_home_callbacks(dash_app):
         
         if sem_lock:
             filter_content[0] = "Date: LOCKED by Semester"
+        end_time = time.time()
+        print(f"Home callback execution time: {end_time - start_time} seconds")
         return content, *filter_content, new_start_date
     
 def create_courses_callbacks(dash_app):
@@ -272,19 +478,22 @@ def create_courses_callbacks(dash_app):
         new_start_date, new_start_date_str, end_date, end_date_str = get_start_and_end_dates(start_date, end_date,
                                                                                               semester, year, sem_lock,
                                                                                               date_range)
+        if code and len(code) == 8:
+            code = code.upper()
+        else:
+            code = None
 
-        df = get_cached_df()
-        df = filter_data(df, year=year, semester=semester, start_date=new_start_date_str, end_date=end_date_str)
+        engine = get_sqlalchemy_engine()
+        df = get_most_searched_course(engine, year=year, semester=semester, limit=10, code=code)
+        df = df.iloc[::-1].reset_index(drop=True)
         
-        fig2, df_frequency, ranking = plot_most_frequent_codes(df.copy(), code)
+        fig2 = plot_most_frequent_codes(df, code)
 
         box_style, left_box_style, middle_box_style, right_box_style = get_box_styles()
 
-        num_courses = df_frequency.shape[0]
-        median_num_searches = df_frequency['frequency'].median()
-        total_searches = df.shape[0]
-        # Get % of searches from the top 50 courses
-        top_10_percent = df_frequency.iloc[0:50]['frequency'].sum() / total_searches
+        num_courses = get_num_unique_courses()
+        median_num_searches = get_median_searches_per_course(year=year, semester=semester)
+        top_10_percent = get_searches_for_top_50_courses(year=year, semester=semester)
 
         content = html.Div([
             html.Div([
@@ -316,8 +525,7 @@ def create_courses_callbacks(dash_app):
 
         semester_list = get_semester_list()
         semester_list["NONE"] = "None"
-        if code is None or len(code) == 0:
-            code = "None"
+        
 
         # Updated labels for filter buttons
         filter_content = [
@@ -366,8 +574,7 @@ def create_hourly_callbacks(dash_app):
                                                                                               semester, year, sem_lock,
                                                                                               date_range)
 
-        df = get_cached_df()
-        df = filter_data(df, year=year, semester=semester, start_date=new_start_date_str, end_date=end_date_str)
+        df = get_search_logs_df(year=year, semester=semester, start_date=new_start_date_str, end_date=end_date_str)
         
         fig = gen_hourly_heatmap(df.copy())
     
@@ -405,17 +612,18 @@ def create_general_callbacks(dash_app, page):
             if n1 or n2:
                 return not is_open
             return is_open
-
-        @dash_app.callback(
-            Output(f"{page}modal-course", "is_open"),
-            [Input(f"{page}course-btn", "n_clicks"), 
-            Input(f"{page}close-course", "n_clicks")],
-            [State(f"{page}modal-course", "is_open")],
-        )
-        def toggle_course_modal(n1, n2, is_open):
-            if n1 or n2:
-                return not is_open
-            return is_open
+        
+        if page != "hourly-":
+            @dash_app.callback(
+                Output(f"{page}modal-course", "is_open"),
+                [Input(f"{page}course-btn", "n_clicks"), 
+                Input(f"{page}close-course", "n_clicks")],
+                [State(f"{page}modal-course", "is_open")],
+            )
+            def toggle_course_modal(n1, n2, is_open):
+                if n1 or n2:
+                    return not is_open
+                return is_open
 
         if page == "home-":
             @dash_app.callback(
