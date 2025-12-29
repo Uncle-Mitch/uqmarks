@@ -214,6 +214,10 @@ def static_proxy(path):
         return send_from_directory(app.static_folder, path)
     else:
         return send_from_directory(app.static_folder, 'index.html')
+    
+@app.route("/health")
+def health():
+    return "ok", 200
 
 def start_app():
     port = int(os.environ.get("PORT", 5000))
