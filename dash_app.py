@@ -13,7 +13,6 @@ from db_connection import get_sqlalchemy_engine, db, SearchLogs, Course
 import pandas as pd
 import os
 
-@cache.memoize(timeout=3600)
 def get_search_logs_df(year=None, semester=None, start_date=None, end_date=None):
     """Fetch data from the search_logs table in PostgreSQL and return it as a Pandas DataFrame."""
     local_ts = (
@@ -45,7 +44,6 @@ def get_search_logs_df(year=None, semester=None, start_date=None, end_date=None)
     with db.engine.connect() as conn:
         return pd.read_sql(query.statement, conn)
     
-@cache.memoize(timeout=3600)
 def group_data_from_db(engine, year=None, semester=None, interval='D', start_date=None, end_date=None, code=None):
     """
     Group data at the database level based on the specified interval.
@@ -101,7 +99,6 @@ def group_data_from_db(engine, year=None, semester=None, interval='D', start_dat
     with db.engine.connect() as conn:
         return pd.read_sql(query.statement, conn)
 
-@cache.memoize(timeout=3600)
 def get_most_searched_course(engine, year=None, semester=None, limit=1, code=None):
     """
     Query the database to find the most searched course.
@@ -142,12 +139,10 @@ def get_most_searched_course(engine, year=None, semester=None, limit=1, code=Non
 
     return pd.concat([df, code_df], ignore_index=True)
 
-@cache.memoize(timeout=3600)
 def get_num_unique_courses():
     """Return the number of unique course codes."""
     return db.session.query(db.func.count(db.func.distinct(Course.code))).scalar()
 
-@cache.memoize(timeout=3600)
 def get_median_searches_per_course(year=None, semester=None):
     """Return the median number of searches per course."""
     subquery = db.session.query(
@@ -171,7 +166,6 @@ def get_median_searches_per_course(year=None, semester=None):
 
     return median_query.scalar()
 
-@cache.memoize(timeout=3600)
 def get_searches_for_top_50_courses(year=None, semester=None):
     """Return percentage of searches from the top 50 courses."""
 
