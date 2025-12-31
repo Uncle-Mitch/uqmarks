@@ -8,4 +8,5 @@ from flask_cache import get_semester_list
 
 dash.register_page(__name__, path='/courses')
 
-layout = generate_dashboard(get_semester_list(), page='course-')
+def layout():
+    return generate_dashboard(get_semester_list(), page='course-')

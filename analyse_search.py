@@ -310,7 +310,7 @@ def get_modal(page):
                             id=f'{page}date-picker-range',
                             display_format='DD/MM/YYYY',
                             min_date_allowed=dt(2023, 2, 1),
-                            max_date_allowed=(dt.now()-relativedelta(days=1)).date(),
+                            max_date_allowed=dt.now().date(),
                             initial_visible_month=dt.now(),
                             start_date=dt(2023, 2, 1).date(), # All time hardcoded
                             end_date=dt.now().date(),

@@ -13,6 +13,7 @@ from db_connection import get_sqlalchemy_engine, db, SearchLogs, Course
 import pandas as pd
 import os
 
+@cache.memoize(timeout=3600)
 def get_search_logs_df(year=None, semester=None, start_date=None, end_date=None):
     """Fetch data from the search_logs table in PostgreSQL and return it as a Pandas DataFrame."""
     local_ts = (
@@ -43,7 +44,8 @@ def get_search_logs_df(year=None, semester=None, start_date=None, end_date=None)
 
     with db.engine.connect() as conn:
         return pd.read_sql(query.statement, conn)
-    
+
+@cache.memoize(timeout=3600)
 def group_data_from_db(engine, year=None, semester=None, interval='D', start_date=None, end_date=None, code=None):
     """
     Group data at the database level based on the specified interval.
@@ -87,7 +89,10 @@ def group_data_from_db(engine, year=None, semester=None, interval='D', start_dat
     if start_date is not None:
         query = query.filter(SearchLogs.ts >= start_date)
     if end_date is not None:
-        query = query.filter(SearchLogs.ts <= end_date)
+        # make end date inclusive
+        end_dt = dt.strptime(end_date, "%Y-%m-%d").date()
+        end_plus_one = (end_dt + relativedelta(days=1)).strftime("%Y-%m-%d")
+        query = query.filter(SearchLogs.ts < end_plus_one)
     if code is not None:
         query = query.filter(SearchLogs.code == code)
 
@@ -99,6 +104,7 @@ def group_data_from_db(engine, year=None, semester=None, interval='D', start_dat
     with db.engine.connect() as conn:
         return pd.read_sql(query.statement, conn)
 
+@cache.memoize(timeout=3600)
 def get_most_searched_course(engine, year=None, semester=None, limit=1, code=None):
     """
     Query the database to find the most searched course.
@@ -139,10 +145,12 @@ def get_most_searched_course(engine, year=None, semester=None, limit=1, code=Non
 
     return pd.concat([df, code_df], ignore_index=True)
 
+@cache.memoize(timeout=86400)
 def get_num_unique_courses():
     """Return the number of unique course codes."""
     return db.session.query(db.func.count(db.func.distinct(Course.code))).scalar()
 
+@cache.memoize(timeout=86400)
 def get_median_searches_per_course(year=None, semester=None):
     """Return the median number of searches per course."""
     subquery = db.session.query(
@@ -166,6 +174,7 @@ def get_median_searches_per_course(year=None, semester=None):
 
     return median_query.scalar()
 
+@cache.memoize(timeout=86400)
 def get_searches_for_top_50_courses(year=None, semester=None):
     """Return percentage of searches from the top 50 courses."""
 
@@ -344,7 +353,7 @@ def create_home_callbacks(dash_app):
         State('home-semester-switch','value')],
     )
     def update_output(date_range, date_clicks, course_clicks, aggregate_clicks, semester_clicks, start_date, end_date, code, sem_text, interval, sem_lock):
-        start_time = time.time()
+
         config={
             'displayModeBar': False,
             'displaylogo': False,                                       
@@ -355,7 +364,6 @@ def create_home_callbacks(dash_app):
             year, _, semester = sem_text.partition('S')
             year = int(year)
             semester = int(semester)
-
         new_start_date, new_start_date_str, end_date, end_date_str = get_start_and_end_dates(start_date, end_date,
                                                                                               semester, year, sem_lock,
                                                                                               date_range)
@@ -431,8 +439,6 @@ def create_home_callbacks(dash_app):
         
         if sem_lock:
             filter_content[0] = "Date: LOCKED by Semester"
-        end_time = time.time()
-        print(f"Home callback execution time: {end_time - start_time} seconds")
         return content, *filter_content, new_start_date
     
 def create_courses_callbacks(dash_app):
@@ -677,5 +683,5 @@ def create_dash_app(server):
     create_general_callbacks(dash_app, "home-")
     create_general_callbacks(dash_app, "course-")
     create_general_callbacks(dash_app, "hourly-")
-    dash_app.layout = gen_home_page() #generate_dashboard(get_semester_list())
+    dash_app.layout = gen_home_page() #
     return dash_app
