@@ -54,7 +54,7 @@ MANAGER_ID=discord_user_id
 ### Option 1: Docker (Recommended)
 
 ```bash
-docker-compose up
+docker compose up
 ```
 
 ### Option 2: Manual Start
