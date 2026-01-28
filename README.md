@@ -1,41 +1,92 @@
 ![UQMARKS logo image](./static/images/share_small.png)
 
-A grade calculator specifically designed for UQ. 
-Currently hosted on https://www.uqmarks.com/
+A grade calculator specifically designed for UQ.  
+Currently hosted at https://www.uqmarks.com/
 
-### Features:
-* Weekly Quiz Calculator
-	> Calculate grade if only the best *X* quizzes count towards the grade.
-* Grade Calculator for Course/Subject
-	>Calculate required marks to get a certain grade
+## Features
 
-Developed with the **Flask Framework (Python)** and **SQLite**.
+- **Weekly Quiz Calculator** - Calculate your grade when only the best _X_ quizzes count
+- **Grade Calculator** - Calculate required marks to achieve a certain grade in any course
 
-Inspired by [uqfinal](https://uqfinal.com/). 
+## Tech Stack
 
-### Installation
-1. (Optional) Create a discord channel (or two) for logging. 
-   - One for error logs, one for normal.
-2. Create a `.env` file in the root directory with the following variables:
+- **Backend:** Flask (Python 3.10+), PostgreSQL, SQLAlchemy
+- **Frontend:** Vue 3, Vuetify, TypeScript, Vite
+- **Analytics:** Dash (Python)
+- **Deployment:** Docker, Gunicorn
+
+Inspired by [uqfinal](https://uqfinal.com/).
+
+## Installation
+
+### Prerequisites
+
+- Python 3.10+
+- Node.js
+- PostgreSQL (or use Docker)
+
+### Environment Setup
+
+1. (Optional) Create Discord channels for logging (one for errors, one for general logs)
+2. Create a `.env` file in the root directory:
+
+```env
+# Flask
+SECRET_KEY=your_secret_key
+DEBUG_MODE=T/F
+ENABLE_LOGGING=T/F
+
+# PostgreSQL
+POSTGRES_USER=your_db_user
+POSTGRES_PASSWORD=your_db_password
+POSTGRES_DB=your_db_name
+POSTGRES_HOST=localhost
+POSTGRES_PORT=5432
+
+# Discord Logging (optional)
+LOG_LINK=discord_webhook_url
+ERROR_LOG_LINK=discord_webhook_url
+MANAGER_ID=discord_user_id
 ```
-SECRET_KEY - secret key for Flask
-LOG_LINK - Discord webhook link for normal logging
-ERROR_LOG_LINK - Discord webhook link for error logging
-MANAGER_ID - a Discord User ID (18 digit number) for error logs. The message will mention the user. (e.g. <@[ID]>)
-DEBUG_MODE - T/F , if you want to run Flask in DEBUG mode
-ENABLE_LOGGING - T/F , if you want to enable logging of operations
+
+## Running the App
+
+### Option 1: Docker (Recommended)
+
+```bash
+docker compose up
 ```
 
-### Starting The App:
-**Note the application is written and hosted in Python 3.10. It must be run in 3.10+**
-1. Change settings in `config.py` as necessary
-   - DEBUG_MODE - Set to True if you want Flask to run in debug mode.
-   - ENABLE_LOGGING - Set to True if you want to send logging requests
-      - If false, LOG_LINK and ERROR_LOG_LINK env variables won't matter.
+### Option 2: Manual Start
 
-2. Run `app.py`
-3. Open a new terminal:
-```
-cd react-app
-npm run dev
-```
+This allows you to run the app in debug mode, with hot reload.
+
+1. Install Python dependencies:
+
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+2. Install frontend dependencies:
+
+   ```bash
+   cd react-app
+   npm install
+   ```
+
+3. Start the Flask backend:
+
+   ```bash
+   python app.py
+   ```
+
+4. In a new terminal, start the frontend dev server:
+   ```bash
+   cd react-app
+   npm run dev
+   ``
+   ```
+
+## License
+
+MIT
