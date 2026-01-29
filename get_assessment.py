@@ -23,7 +23,8 @@ class IncorrectCourseProfileError(Exception):
     def __init__(self, course: str, sem: str, year: str):
         self.message = f"The course profile URL given does not match course '{course}' for Semester {sem} {year}"
         if sem == "3":
-            self.message = f"The course profile URL given does not match course '{course}' for Semester {sem} {year}-{year+1}"
+            year_int = int(year)
+            self.message = f"The course profile URL given does not match course '{course}' for Semester {sem} {year}-{year_int+1}"
         super().__init__(self.message)
         
 class WrongSemesterError(Exception):
