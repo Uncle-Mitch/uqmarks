@@ -2,6 +2,7 @@ import os
 from sqlalchemy import create_engine, text
 from sqlalchemy import Column, Integer, Text, TIMESTAMP, text, String
 from sqlalchemy.ext.declarative import declarative_base
+from pathlib import Path
 
 
 from flask_sqlalchemy import SQLAlchemy
@@ -25,11 +26,10 @@ class SearchLogs(db.Model):
     code = db.Column(db.Text, nullable=False)
     semester = db.Column(db.Integer, nullable=False)
     year = db.Column(db.Integer, nullable=False)
+    event_type = db.Column(db.String(16), nullable=False, server_default=text("'add'"))
     
     __table_args__ = (
         db.Index('ix_search_logs_code_sem_year', 'code'),
-    )
-    __table_args__ = (
         db.Index('idx_search_logs_ts', 'ts'),
     )
     
@@ -43,6 +43,52 @@ def create_database(app):
             print("Database tables created successfully.")
         except Exception as e:
             print(f"Error creating database tables: {e}")
+
+
+def run_startup_migrations(app):
+    """Apply SQL files in migrations/ exactly once at application startup."""
+    migrations_dir = Path(__file__).resolve().parent / "migrations"
+    if not migrations_dir.exists():
+        return
+
+    with app.app_context():
+        engine = db.engine
+        with engine.begin() as conn:
+            conn.execute(text("""
+                CREATE TABLE IF NOT EXISTS schema_migrations (
+                    filename TEXT PRIMARY KEY,
+                    applied_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+                )
+            """))
+            applied_rows = conn.execute(text("SELECT filename FROM schema_migrations")).fetchall()
+            applied = {row[0] for row in applied_rows}
+
+        migration_files = sorted(migrations_dir.glob("*.sql"))
+        for migration_file in migration_files:
+            if migration_file.name in applied:
+                continue
+
+            sql_script = migration_file.read_text(encoding="utf-8")
+            raw_conn = engine.raw_connection()
+            try:
+                with raw_conn.cursor() as cursor:
+                    cursor.execute(sql_script)
+                raw_conn.commit()
+            except Exception:
+                raw_conn.rollback()
+                raise
+            finally:
+                raw_conn.close()
+
+            with engine.begin() as conn:
+                conn.execute(
+                    text("""
+                        INSERT INTO schema_migrations (filename)
+                        VALUES (:filename)
+                        ON CONFLICT (filename) DO NOTHING
+                    """),
+                    {"filename": migration_file.name}
+                )
 
 def get_sqlalchemy_engine():
     """Create and return an SQLAlchemy engine for PostgreSQL."""

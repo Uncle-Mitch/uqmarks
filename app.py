@@ -23,7 +23,7 @@ import socket
 from dotenv import load_dotenv
 from flask_cache import cache, get_semester_list, get_cached_df, get_announcement, init_cache
 from dash_app import create_dash_app
-from db_connection import db, Course, SearchLogs, create_database
+from db_connection import db, Course, SearchLogs, create_database, run_startup_migrations
 
 
 load_dotenv()
@@ -45,6 +45,7 @@ DEFAULT_INVALID_TEXT = "The ECP is currently unavailable or the code is invalid"
     
 db.init_app(app)
 create_database(app=app)
+run_startup_migrations(app=app)
 dash_app = create_dash_app(app)
 
 @app.route('/dash', methods=['GET'])
@@ -98,6 +99,13 @@ def is_valid_course_code(code):
 
 def is_valid_semester_id(semester_id):
     return bool(re.match(r"^\d{4}S[123]$", semester_id))
+
+def course_exists_for_semester_id(course_code, semester_id):
+    if not is_valid_course_code(course_code) or not is_valid_semester_id(semester_id):
+        return False
+    year = int(semester_id.split("S")[0])
+    semester = int(semester_id.split("S")[1])
+    return db.session.query(Course).filter_by(code=course_code, year=year, semester=semester).first() is not None
 
 def is_valid_course_profile_url(url):
     normal_pattern = bool(re.match(r"^https:\/\/course-profiles\.uq\.edu\.au\/course-profiles\/[A-Za-z]{4}[0-9]{4}-\d+-\d+(#[-A-Za-z0-9]+)?$", url))
@@ -199,6 +207,47 @@ def api_get_course():
 def api_get_announcement():
 
     return jsonify({'success': True, 'announcement': get_announcement()}), 200
+
+
+@app.route('/api/analytics/page-load/', methods=['POST'])
+@cross_origin(origins=["https://www.uqmarks.com", "https://uqmarks.com", "http://localhost:5173", "http://127.0.0.1:5000/"])
+@limiter.limit("30/minute")
+def api_analytics_page_load():
+    max_entries = 25
+    payload = request.get_json(silent=True)
+    if payload is None:
+        payload = {}
+    if not isinstance(payload, dict):
+        return jsonify({'success': False, 'error': 'Invalid JSON payload.'}), 400
+
+    entries = payload.get("entries", [])
+
+    if not isinstance(entries, list):
+        return jsonify({'success': False, 'error': 'Invalid entries payload.'}), 400
+
+    if len(entries) > max_entries:
+        return jsonify({'success': False, 'error': f'Maximum {max_entries} entries per request.'}), 400
+
+    logged = 0
+
+    for entry in entries:
+        if not isinstance(entry, dict):
+            continue
+
+        course_code = str(entry.get("courseCode", "")).upper()
+        semester_id = str(entry.get("semesterId", ""))
+
+        if not course_exists_for_semester_id(course_code, semester_id):
+            continue
+
+        try:
+            year, semester = semester_id.split("S", 1)
+            log_search(course_code, semester, year, THIS_FOLDER, app.config['ENABLE_LOGGING'], event_type="page_load")
+            logged += 1
+        except Exception:
+            continue
+
+    return jsonify({'success': True, 'logged': logged}), 200
 
 @app.route('/')
 @app.route('/course')
