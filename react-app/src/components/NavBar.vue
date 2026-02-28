@@ -70,15 +70,16 @@ const router = useRouter();
 onMounted(() => {
     const savedTheme = localStorage.getItem("theme");
     if (savedTheme) {
-        theme.global.name.value = savedTheme === "dark" ? "dark" : "light";
+        let desiredTheme = savedTheme === "dark" ? "dark" : "light";
+        theme.change(desiredTheme);
         isDark.value = theme.global.current.value.dark;
     } else {
-        theme.global.name.value = "dark";
+        theme.change("dark");
     }
 });
 
 function toggleTheme() {
-    theme.global.name.value = theme.global.current.value.dark ? "light" : "dark";
+    theme.change(theme.global.current.value.dark ? "light" : "dark");
     isDark.value = theme.global.current.value.dark;
     localStorage.setItem("theme", isDark.value ? "dark" : "light");
 }

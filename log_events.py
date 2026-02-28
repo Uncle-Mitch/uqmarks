@@ -21,10 +21,10 @@ def connect_to_db():
     return psycopg2.connect(**DB_CONFIG)
         
 
-def log_search_to_db(code, semester, year):
+def log_search_to_db(code, semester, year, event_type="add"):
     """Log a search event to the PostgreSQL database using SQLAlchemy ORM."""
     try:
-        new_log = SearchLogs(code=code, semester=semester, year=year)
+        new_log = SearchLogs(code=code, semester=semester, year=year, event_type=event_type)
         db.session.add(new_log)
         db.session.commit()
     except Exception as e:
@@ -52,7 +52,7 @@ def log_error(exception:Exception, code:str, semester:str, year:str):
     ]
     result = requests.post(os.environ['ERROR_LOG_LINK'], json = data, headers=headers)
 
-def log_search(code:str, semester:str, year:str, folder, enable_logging:bool):
+def log_search(code:str, semester:str, year:str, folder, enable_logging:bool, event_type:str="add"):
     """Logs a successful search for a course code.
 
     Args:
@@ -74,7 +74,7 @@ def log_search(code:str, semester:str, year:str, folder, enable_logging:bool):
     if enable_logging:
         requests.post(os.environ['LOG_LINK'], json = data, headers=headers)
 
-    log_search_to_db(code, semester, year)
+    log_search_to_db(code, semester, year, event_type=event_type)
 
 def log_quiz():
     """Push a log that the quiz page was opened"""
