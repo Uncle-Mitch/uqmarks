@@ -28,8 +28,7 @@
       "matchUpdateTypes": [
         "major"
       ],
-      "groupName": "all major dependencies",
-      "separateMajorMinor": true
+      "groupName": "all major dependencies"
     }
   ]
 }
