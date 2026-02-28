@@ -1,0 +1,35 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended"
+  ],
+  "labels": [
+    "dependencies"
+  ],
+  "dependencyDashboard": true,
+  "rangeStrategy": "pin",
+  "packageRules": [
+    {
+      "matchManagers": [
+        "npm",
+        "pip_requirements"
+      ],
+      "matchUpdateTypes": [
+        "patch",
+        "minor"
+      ],
+      "groupName": "all non-major dependencies"
+    },
+    {
+      "matchManagers": [
+        "npm",
+        "pip_requirements"
+      ],
+      "matchUpdateTypes": [
+        "major"
+      ],
+      "groupName": "all major dependencies",
+      "separateMajorMinor": true
+    }
+  ]
+}
