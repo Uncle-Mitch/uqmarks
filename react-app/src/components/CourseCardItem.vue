@@ -119,7 +119,9 @@
                                             v-model="item.weight"
                                             hide-details
                                             density="compact"
-                                            @update:model-value="(value) => handleWeightChange(index, String(value ?? ''))"
+                                            @update:model-value="
+                                                (value) => handleWeightChange(index, String(value ?? ''))
+                                            "
                                             variant="outlined"
                                         />
                                         <v-icon
@@ -167,7 +169,12 @@
 
                 <v-row justify="center" class="mt-4" v-if="!card.weightValid && card.validInput && !card.loading">
                     <v-col cols="12">
-                        <v-alert elevation="2" prominent color="warning" class="text-left d-flex align-center font-weight-bold">
+                        <v-alert
+                            elevation="2"
+                            prominent
+                            color="warning"
+                            class="text-left d-flex align-center font-weight-bold"
+                        >
                             <template #prepend>
                                 <v-icon icon="fas fa-exclamation-triangle" class="warning-icon" />
                             </template>
@@ -227,14 +234,7 @@ const emit = defineEmits<{
     (event: "persist-state"): void;
 }>();
 
-const {
-    card,
-    semesterOptions,
-    gradeCutoffs,
-    gradeOptions,
-    fromColor,
-    toColor,
-} = props;
+const { card, semesterOptions, gradeCutoffs, gradeOptions, fromColor, toColor } = props;
 
 const breakpoints = useBreakpoints({
     mobile: 0,
