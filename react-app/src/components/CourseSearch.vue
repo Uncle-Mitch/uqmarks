@@ -38,7 +38,7 @@
                     rounded="l"
                     :loading="loading"
                 >
-                    Go
+                    Add
                 </v-btn>
             </v-col>
         </v-row>
@@ -46,9 +46,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, onMounted, watch } from "vue";
+import { computed, ref, watch } from "vue";
 import { useRouter } from "vue-router";
-const baseUrl = import.meta.env.VITE_API_BASE_URL;
 
 const props = defineProps<{
     initialCourseCode?: string;
@@ -57,6 +56,11 @@ const props = defineProps<{
     rules?: ((v: string) => true | string)[];
     errorMessage?: string;
     loading?: boolean;
+    submitMode?: "navigate" | "emit";
+}>();
+
+const emit = defineEmits<{
+    (event: "submitSearch", payload: { courseCode: string; semesterId: string }): void;
 }>();
 
 const router = useRouter();
@@ -82,12 +86,17 @@ const isValid = computed(() => {
 
 function onSubmit() {
     if (!isValid.value) return;
+    const payload = {
+        semesterId: semester.value,
+        courseCode: courseCode.value,
+    };
+    if (props.submitMode === "emit") {
+        emit("submitSearch", payload);
+        return;
+    }
     router.push({
         path: "/course",
-        query: {
-            semesterId: semester.value,
-            courseCode: courseCode.value,
-        },
+        query: payload,
     });
 }
 </script>

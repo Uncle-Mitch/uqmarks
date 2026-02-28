@@ -34,6 +34,11 @@ const props = defineProps<{
     semesterOptions: Array<{ value: string; label: string }>;
     url?: string;
     errorMessage?: string;
+    submitMode?: "navigate" | "emit";
+}>();
+
+const emit = defineEmits<{
+    (event: "submitUrl", payload: { courseProfileUrl: string }): void;
 }>();
 
 const router = useRouter();
@@ -50,13 +55,18 @@ const isValid = computed(() => {
 
 function onSubmit() {
     if (!isValid.value) return;
+    const payload = {
+        semesterId: props.semesterId,
+        courseCode: props.courseCode,
+        courseProfileUrl: courseProfileUrl.value,
+    };
+    if (props.submitMode === "emit") {
+        emit("submitUrl", { courseProfileUrl: courseProfileUrl.value });
+        return;
+    }
     router.push({
         path: "/course",
-        query: {
-            semesterId: props.semesterId,
-            courseCode: props.courseCode,
-            courseProfileUrl: courseProfileUrl.value,
-        },
+        query: payload,
     });
 }
 </script>
