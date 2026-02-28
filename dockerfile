@@ -1,5 +1,5 @@
 # ---------- Frontend build stage ----------
-FROM node:20-alpine AS frontend
+FROM node:20.20.0-alpine AS frontend
 WORKDIR /app/react-app
 
 # Install dependencies first for better caching
