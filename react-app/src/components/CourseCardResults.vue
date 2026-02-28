@@ -5,7 +5,11 @@
                 <div class="d-flex align-center justify-space-between ga-3 flex-wrap mb-2">
                     <div class="d-flex align-baseline ga-2 total-score">
                         <span class="text-overline text-medium-emphasis">Total Score</span>
-                        <GradientText :from="props.fromColor" :to="props.toColor" tag="span" class="goal-total-gradient">
+                        <GradientText
+                            v-bind="totalScoreGradientProps"
+                            class="text-h5 font-weight-bold"
+                            style="line-height: 1"
+                        >
                             {{ props.card.totalScore.toFixed(2) }}%
                         </GradientText>
                     </div>
@@ -15,7 +19,10 @@
                 </div>
                 <div class="grade-timeline" aria-label="Grade timeline">
                     <div class="grade-track"></div>
-                    <div class="grade-progress" :style="{ width: `${props.clampPercent(props.getTimelineScore)}%` }"></div>
+                    <div
+                        class="grade-progress"
+                        :style="{ width: `${props.clampPercent(props.getTimelineScore)}%` }"
+                    ></div>
                     <div
                         class="grade-unreachable-zone"
                         :style="{
@@ -78,6 +85,7 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from "vue";
 import GradientText from "./GradientText.vue";
 import type { CourseCard, GradeCutoff, TargetSummary } from "../types/home";
 
@@ -99,6 +107,11 @@ const emit = defineEmits<{
     (event: "set-target-grade", grade: number): void;
 }>();
 
+const totalScoreGradientProps = computed(() => ({
+    from: props.fromColor,
+    to: props.toColor,
+    tag: "span",
+}));
 </script>
 
 <style lang="scss" scoped>
@@ -109,12 +122,6 @@ const emit = defineEmits<{
 
 .total-score {
     min-height: 36px;
-}
-
-.goal-total-gradient {
-    font-size: 1.35rem;
-    line-height: 1;
-    font-weight: 700;
 }
 
 .goal-select {
@@ -270,8 +277,8 @@ const emit = defineEmits<{
 }
 
 @media (max-width: 600px) {
-    .goal-total-gradient {
-        font-size: 1.2rem;
+    :deep(.text-h5) {
+        font-size: 1.2rem !important;
     }
 
     .goal-summary-row {
