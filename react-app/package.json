@@ -13,7 +13,7 @@
         "format:check": "prettier --check ."
     },
     "dependencies": {
-        "@fortawesome/fontawesome-free": "^7.1.0",
+        "@fortawesome/fontawesome-free": "7.1.0",
         "@mdi/font": "^7.4.47",
         "@vueuse/core": "^14.1.0",
         "eslint-plugin-react-hooks": "^7.0.1",
