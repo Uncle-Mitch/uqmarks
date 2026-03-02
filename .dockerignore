@@ -1,23 +1,43 @@
-# Ignore Python
+# Python
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
+*.pytest_cache/
+*.mypy_cache/
 .venv/
 env/
+venv/
 
-# Ignore Node
+# Node
 node_modules/
+react-app/node_modules/
+react-app/dist/
+react-app/build/
 dist/
 build/
 
-# Ignore Git + local stuff
+# Git and CI/dev metadata
 .git/
+.github/
 .gitignore
-*.log
 
 # OS/editor artifacts
 .vscode/
+.idea/
 .DS_Store
 
-# Ignore large folders in your project
-data/
+# Local runtime/state
+logs/
+instance/
 tmp/
+*.log
+*.pid
+
+# Large data/artifacts
+data/
+*.sqlite
+*.db
+*.sql
+
+README.md
