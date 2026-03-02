@@ -33,7 +33,7 @@ jobs:
           VITE_API_BASE_URL: https://www.uqmarks.com
 
       - name: Upload build artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: built-uqmarks-vue-app
           path: react-app/dist
@@ -83,7 +83,7 @@ jobs:
           docker save "$LOWER_IMAGE_NAME:$TAG" -o uqmarks-image.tar
 
       - name: Upload Docker image artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: uqmarks-docker-image
           path: uqmarks-image.tar
