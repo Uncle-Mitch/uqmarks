@@ -7,19 +7,14 @@ from flask_cors import cross_origin, CORS
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from flask_limiter.errors import RateLimitExceeded
-import json
 from get_assessment import *
 from log_events import *
-from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import exc
 from os import path
 from ast import literal_eval as make_tuple
 import os
 from pathlib import Path
-from flask_caching import Cache
-from datetime import datetime
 import ipaddress
-import socket
 from dotenv import load_dotenv
 from flask_cache import cache, get_semester_list, get_cached_df, get_announcement, init_cache
 from dash_app import create_dash_app

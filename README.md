@@ -10,7 +10,7 @@ Currently hosted at https://www.uqmarks.com/
 
 ## Tech Stack
 
-- **Backend:** Flask (Python 3.10+), PostgreSQL, SQLAlchemy
+- **Backend:** Flask (Python 3.11+), PostgreSQL, SQLAlchemy
 - **Frontend:** Vue 3, Vuetify, TypeScript, Vite
 - **Analytics:** Dash (Python)
 - **Deployment:** Docker, Gunicorn
@@ -21,7 +21,8 @@ Inspired by [uqfinal](https://uqfinal.com/).
 
 ### Prerequisites
 
-- Python 3.10+
+- Python 3.11+
+- uv
 - Node.js
 - PostgreSQL (or use Docker)
 
@@ -64,7 +65,7 @@ This allows you to run the app in debug mode, with hot reload.
 1. Install Python dependencies:
 
    ```bash
-   pip install -r requirements.txt
+   uv sync
    ```
 
 2. Install frontend dependencies:
@@ -84,8 +85,19 @@ This allows you to run the app in debug mode, with hot reload.
    ```bash
    cd react-app
    npm run dev
-   ``
    ```
+
+## Dependency Management (uv)
+
+Use `pyproject.toml` and `uv.lock` as the only dependency source.
+
+```bash
+# After editing pyproject.toml dependencies
+uv lock
+
+# Sync environment to the lock file
+uv sync
+```
 
 ## License
 
