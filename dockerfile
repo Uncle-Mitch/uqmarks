@@ -24,17 +24,19 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends build-essential && rm -rf /var/lib/apt/lists/*
 
 
-# Install Python dependencies
-COPY requirements.txt .
-RUN pip install --upgrade pip wheel setuptools \
- && pip install --no-cache-dir --only-binary=:all: numpy pandas \
- && pip install --no-cache-dir -r requirements.txt
+# Install Python dependencies from uv lockfile
+COPY pyproject.toml uv.lock ./
+RUN pip install --upgrade pip setuptools wheel \
+ && pip install --no-cache-dir uv \
+ && uv sync --frozen --no-dev --no-install-project
 
 # Copy app source
 COPY . .
 
 # Bring in built frontend assets
 COPY --from=frontend /app/react-app/dist ./react-app/dist
+
+ENV PATH="/app/.venv/bin:$PATH"
 
 EXPOSE 5000
 CMD ["gunicorn", "-b", "0.0.0.0:5000", "--workers", "1", "--threads", "2", "--timeout", "60", "app:app"]

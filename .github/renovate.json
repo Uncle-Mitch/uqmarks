@@ -1,34 +1,33 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": [
-    "config:recommended"
-  ],
-  "labels": [
-    "dependencies"
-  ],
+  "extends": ["config:recommended"],
+  "labels": ["dependencies"],
   "dependencyDashboard": true,
-  "rangeStrategy": "pin",
+  "rangeStrategy": "bump",
   "packageRules": [
     {
-      "matchManagers": [
-        "npm",
-        "pip_requirements"
-      ],
-      "matchUpdateTypes": [
-        "patch",
-        "minor"
-      ],
-      "groupName": "all non-major dependencies"
+      "matchManagers": ["npm"],
+      "matchUpdateTypes": ["patch", "minor"],
+      "groupName": "npm non-major dependencies"
     },
     {
-      "matchManagers": [
-        "npm",
-        "pip_requirements"
-      ],
-      "matchUpdateTypes": [
-        "major"
-      ],
-      "groupName": "all major dependencies"
+      "matchManagers": ["npm"],
+      "matchUpdateTypes": ["major"],
+      "groupName": "npm major dependencies"
+    },
+    {
+      "matchManagers": ["uv"],
+      "matchUpdateTypes": ["patch", "minor"],
+      "groupName": "uv non-major dependencies"
+    },
+    {
+      "matchManagers": ["uv"],
+      "matchUpdateTypes": ["major"],
+      "groupName": "uv major dependencies"
+    },
+    {
+      "matchManagers": ["github-actions"],
+      "enabled": false
     }
   ]
 }
