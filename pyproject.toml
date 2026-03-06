@@ -5,7 +5,7 @@ description = "A grade calculator for UQ"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
-    "beautifulsoup4>=4.11.1",
+    "beautifulsoup4>=4.14.3",
     "dash>=3.0.4",
     "dash-bootstrap-components>=2.0.3",
     "flask>=3.0.3",
