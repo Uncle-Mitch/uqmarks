@@ -8,30 +8,45 @@ RUN npm ci
 
 # Copy source and build
 COPY react-app/ .
-# Optional: pass at build time with --build-arg VITE_API_BASE_URL=...
 ARG VITE_API_BASE_URL
 ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
 RUN npm run build
 
-# ---------- Backend (runtime) stage ----------
-FROM python:3.11-slim AS backend
-
-
+# ---------- Python dependencies stage ----------
+FROM python:3.11-slim AS pydeps
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
+ENV VIRTUAL_ENV=/opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y --no-install-recommends build-essential && rm -rf /var/lib/apt/lists/*
-
-
-# Install Python dependencies
-COPY requirements.txt .
-RUN pip install --upgrade pip wheel setuptools \
- && pip install --no-cache-dir --only-binary=:all: numpy pandas \
+COPY requirements.txt ./
+RUN python -m venv "$VIRTUAL_ENV" \
+ && pip install --upgrade pip setuptools wheel \
  && pip install --no-cache-dir -r requirements.txt
 
-# Copy app source
-COPY . .
+# ---------- Backend runtime stage ----------
+FROM python:3.11-slim AS backend
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+ENV VIRTUAL_ENV=/opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+WORKDIR /app
+
+# Copy Python virtualenv from builder stage
+COPY --from=pydeps /opt/venv /opt/venv
+
+# Copy only runtime backend files
+COPY app.py ./
+COPY analyse_search.py ./
+COPY config.py ./
+COPY db_connection.py ./
+COPY dash_app.py ./
+COPY flask_cache.py ./
+COPY get_assessment.py ./
+COPY log_events.py ./
+COPY dash_pages ./dash_pages
+COPY migrations ./migrations
 
 # Bring in built frontend assets
 COPY --from=frontend /app/react-app/dist ./react-app/dist
