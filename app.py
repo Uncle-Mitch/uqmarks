@@ -19,6 +19,7 @@ from dotenv import load_dotenv
 from flask_cache import cache, get_semester_list, get_cached_df, get_announcement, init_cache
 from dash_app import create_dash_app
 from db_connection import db, Course, SearchLogs, create_database, run_startup_migrations
+import requests
 
 
 load_dotenv()
@@ -37,6 +38,7 @@ DEBUG_MODE = True if os.environ['DEBUG_MODE'] == "T" else False
 cache.init_app(app)
 
 DEFAULT_INVALID_TEXT = "The ECP is currently unavailable or the code is invalid"
+COURSE_PROFILE_PROXY_URL = os.getenv("COURSE_PROFILE_PROXY_URL", "")
     
 db.init_app(app)
 create_database(app=app)
@@ -72,9 +74,19 @@ def get_course(code:str, semester:str, year:str, section_code:str=None):
     found_course = db.session.query(Course).filter_by(code=code, year=yr, semester=sem).first()
     if found_course:
         return make_tuple(found_course.asmts)
-    
     if section_code is None:
-        raise CourseMissingError(code)
+        if not COURSE_PROFILE_PROXY_URL:
+            raise CourseMissingError(code)
+        
+        course_profile_url = fetch_course_profile_url_from_proxy(code, semester, year)
+        if course_profile_url is None:
+            log_error(f"Proxy failed for {code} {semester} {year}", code, semester, year)
+            raise CourseMissingError(code)
+        try:
+            section_code = get_section_code_from_url(course_profile_url, code, semester, year)
+        except Exception: # Let upstream handle the exact exception
+            raise CourseMissingError(code)
+        
     
     weightings = get_assessments(code, semester, year, section_code)
     db_asmts = str(weightings)
@@ -106,6 +118,41 @@ def is_valid_course_profile_url(url):
     normal_pattern = bool(re.match(r"^https:\/\/course-profiles\.uq\.edu\.au\/course-profiles\/[A-Za-z]{4}[0-9]{4}-\d+-\d+(#[-A-Za-z0-9]+)?$", url))
     archive_pattern = bool(re.match(r"^https://archive\.course-profiles\.uq\.edu\.au/student_section_loader/section_\d+/\d+$", url))
     return normal_pattern or archive_pattern
+
+def get_section_code_from_url(course_profile_url, course_code, semester, year):
+    match = re.search(
+        rf"/course-profiles/({re.escape(course_code)}-\d+-\d+)",
+        course_profile_url
+    )
+    if not match:
+        match = re.search(r"/student_section_loader/section_\d+/(\d+)", course_profile_url)
+    if not match:
+        raise IncorrectCourseProfileError(course_code, semester, year)
+    return match.group(1)
+
+
+def fetch_course_profile_url_from_proxy(course_code, semester, year):
+    if not COURSE_PROFILE_PROXY_URL:
+        return None
+
+    try:
+        semester_id = f"{year}S{semester}"
+        response = requests.get(
+            COURSE_PROFILE_PROXY_URL,
+            params={"courseCode": course_code, "semester": semester_id},
+            timeout=10,
+        )
+        if response.status_code != 200:
+            return None
+
+        payload = response.json()
+        course_profile_url = payload.get("courseProfileUrl", "")
+        if isinstance(course_profile_url, str) and is_valid_course_profile_url(course_profile_url):
+            return course_profile_url
+    except Exception:
+        pass
+
+    return None
 
 @app.errorhandler(RateLimitExceeded)
 def handle_ratelimit(e):
@@ -149,16 +196,7 @@ def api_get_course():
 
     try:
         if len(course_profile_url) > 0:
-            match = re.search(
-                rf"/course-profiles/({re.escape(course_code)}-\d+-\d+)",
-                course_profile_url
-            )
-            if not match:
-                match = re.search(r"/student_section_loader/section_\d+/(\d+)", course_profile_url)
-            if not match:
-                raise IncorrectCourseProfileError(course_code, semester, year)
-            
-            section_code = match.group(1)
+            section_code = get_section_code_from_url(course_profile_url, course_code, semester, year)
             weightings = get_course(course_code, semester, year, section_code=section_code)
             assessment_items = []
             for w in weightings:
