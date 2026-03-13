@@ -97,14 +97,14 @@ wheels = [
 
 [[package]]
 name = "dash-bootstrap-components"
-version = "2.0.3"
+version = "2.0.4"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "dash" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/49/8d/0f641e7c7878ac65b4bb78a2c7cb707db036f82da13fd61948adec44d5aa/dash_bootstrap_components-2.0.3.tar.gz", hash = "sha256:5c161b04a6e7ed19a7d54e42f070c29fd6c385d5a7797e7a82999aa2fc15b1de", size = 115466, upload-time = "2025-05-22T22:30:18.02Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/cc/d4/5b7da808ff5acb3a6ca702f504d8ef05bc7d4c475b18dadefd783b1120c3/dash_bootstrap_components-2.0.4.tar.gz", hash = "sha256:c3206c0923774bbc6a6ddaa7822b8d9aa5326b0d3c1e7cd795cc975025fe2484", size = 115599, upload-time = "2025-08-20T19:42:09.449Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/f7/f6/b4652aacfbc8d684c9ca8efc5178860a50b54abf82cd1960013c59f8258f/dash_bootstrap_components-2.0.3-py3-none-any.whl", hash = "sha256:82754d3d001ad5482b8a82b496c7bf98a1c68d2669d607a89dda7ec627304af5", size = 203706, upload-time = "2025-05-22T22:30:16.304Z" },
+    { url = "https://files.pythonhosted.org/packages/d6/38/1efeec8b4d741c09ccd169baf8a00c07a0176b58e418d4cd0c30dffedd22/dash_bootstrap_components-2.0.4-py3-none-any.whl", hash = "sha256:767cf0084586c1b2b614ccf50f79fe4525fdbbf8e3a161ed60016e584a14f5d1", size = 204044, upload-time = "2025-08-20T19:42:07.928Z" },
 ]
 
 [[package]]
@@ -684,7 +684,7 @@ dependencies = [
 requires-dist = [
     { name = "beautifulsoup4", specifier = ">=4.11.1" },
     { name = "dash", specifier = ">=3.0.4" },
-    { name = "dash-bootstrap-components", specifier = ">=2.0.3" },
+    { name = "dash-bootstrap-components", specifier = ">=2.0.4" },
     { name = "flask", specifier = ">=3.0.3" },
     { name = "flask-caching", specifier = ">=2.3.1" },
     { name = "flask-cors", specifier = ">=5.0.1" },
