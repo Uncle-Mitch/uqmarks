@@ -24,8 +24,7 @@ WORKDIR /app
 
 # Install Python dependencies from uv lockfile
 COPY pyproject.toml uv.lock ./
-RUN pip install --upgrade pip setuptools wheel \
- && pip install --no-cache-dir uv \
+RUN pip install --no-cache-dir uv \
  && uv sync --frozen --no-dev --no-install-project
 
 # Copy app source
