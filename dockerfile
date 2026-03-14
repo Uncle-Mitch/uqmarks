@@ -21,13 +21,10 @@ ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y --no-install-recommends build-essential && rm -rf /var/lib/apt/lists/*
-
 
 # Install Python dependencies from uv lockfile
 COPY pyproject.toml uv.lock ./
-RUN pip install --upgrade pip setuptools wheel \
- && pip install --no-cache-dir uv \
+RUN pip install --no-cache-dir uv \
  && uv sync --frozen --no-dev --no-install-project
 
 # Copy app source
