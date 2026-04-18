@@ -530,21 +530,18 @@ def create_courses_callbacks(dash_app):
             semester=semester,
             start_date=new_start_date_str,
             end_date=end_date_str,
-            code=code,
         )
         median_num_searches = get_median_searches_per_course(
             year=year,
             semester=semester,
             start_date=new_start_date_str,
             end_date=end_date_str,
-            code=code,
         )
-        top_10_percent = get_searches_for_top_50_courses(
+        top_50_share = get_searches_for_top_50_courses(
             year=year,
             semester=semester,
             start_date=new_start_date_str,
             end_date=end_date_str,
-            code=code,
         )
 
         content = html.Div([
@@ -564,7 +561,7 @@ def create_courses_callbacks(dash_app):
                 # Average Per Day
                 html.Div([
                     html.P(f"Searches for Top 50 Courses", style={'margin': '0'}),
-                    html.H3(f"{top_10_percent*100:.2f}%", style={'margin': '0'})],
+                    html.H3(f"{top_50_share*100:.2f}%", style={'margin': '0'})],
                     style={**box_style, **right_box_style}
                 )
             ], style={'display': 'flex'}),  # Display as a row using flexbox
