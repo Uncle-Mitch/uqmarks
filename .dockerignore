@@ -1,23 +1,32 @@
 # Ignore Python
-__pycache__/
-*.pyc
+
+**pycache**/
+\*.pyc
 .venv/
 env/
 
 # Ignore Node
+
 node_modules/
 dist/
 build/
 
 # Ignore Git + local stuff
+
 .git/
 .gitignore
-*.log
+\*.log
 
 # OS/editor artifacts
+
 .vscode/
 .DS_Store
 
 # Ignore large folders in your project
+
 data/
 tmp/
+
+# Test folders
+
+tests/
