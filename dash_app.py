@@ -8,7 +8,7 @@ import plotly.express as px
 from dateutil.relativedelta import relativedelta
 import time
 
-from sqlalchemy import create_engine, text, func, Integer
+from sqlalchemy import func, Integer
 from db_connection import get_sqlalchemy_engine, db, SearchLogs
 import pandas as pd
 import os
