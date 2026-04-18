@@ -9,7 +9,7 @@ from dateutil.relativedelta import relativedelta
 import time
 
 from sqlalchemy import create_engine, text, func, Integer
-from db_connection import get_sqlalchemy_engine, db, SearchLogs, Course
+from db_connection import get_sqlalchemy_engine, db, SearchLogs
 import pandas as pd
 import os
 
@@ -145,23 +145,52 @@ def get_most_searched_course(engine, year=None, semester=None, limit=1, code=Non
 
     return pd.concat([df, code_df], ignore_index=True)
 
-@cache.memoize(timeout=86400)
-def get_num_unique_courses():
-    """Return the number of unique course codes."""
-    return db.session.query(db.func.count(db.func.distinct(Course.code))).scalar()
+def apply_search_log_filters(query, year=None, semester=None, start_date=None, end_date=None, code=None):
+    """Apply a consistent set of filters to SearchLogs queries."""
+    if year is not None:
+        query = query.filter(SearchLogs.year == year)
+    if semester is not None:
+        query = query.filter(SearchLogs.semester == semester)
+    if start_date is not None:
+        query = query.filter(SearchLogs.ts >= start_date)
+    if end_date is not None:
+        # Make end date inclusive for date-picker based filters.
+        end_dt = dt.strptime(end_date, "%Y-%m-%d").date()
+        end_plus_one = (end_dt + relativedelta(days=1)).strftime("%Y-%m-%d")
+        query = query.filter(SearchLogs.ts < end_plus_one)
+    if code is not None:
+        query = query.filter(SearchLogs.code == code)
+    return query
 
 @cache.memoize(timeout=86400)
-def get_median_searches_per_course(year=None, semester=None):
+def get_num_unique_courses(year=None, semester=None, start_date=None, end_date=None, code=None):
+    """Return the number of unique searched course codes in the filtered dataset."""
+    query = db.session.query(db.func.count(db.func.distinct(SearchLogs.code)))
+    query = apply_search_log_filters(
+        query,
+        year=year,
+        semester=semester,
+        start_date=start_date,
+        end_date=end_date,
+        code=code,
+    )
+    return query.scalar()
+
+@cache.memoize(timeout=86400)
+def get_median_searches_per_course(year=None, semester=None, start_date=None, end_date=None, code=None):
     """Return the median number of searches per course."""
     subquery = db.session.query(
         SearchLogs.code,
         db.func.count(SearchLogs.id).label("cnt")
     )
-
-    if year is not None:
-        subquery = subquery.filter(SearchLogs.year == year)
-    if semester is not None:
-        subquery = subquery.filter(SearchLogs.semester == semester)
+    subquery = apply_search_log_filters(
+        subquery,
+        year=year,
+        semester=semester,
+        start_date=start_date,
+        end_date=end_date,
+        code=code,
+    )
 
     subquery = (
         subquery.group_by(SearchLogs.code)
@@ -175,33 +204,38 @@ def get_median_searches_per_course(year=None, semester=None):
     return median_query.scalar()
 
 @cache.memoize(timeout=86400)
-def get_searches_for_top_50_courses(year=None, semester=None):
+def get_searches_for_top_50_courses(year=None, semester=None, start_date=None, end_date=None, code=None):
     """Return percentage of searches from the top 50 courses."""
 
     base_query = db.session.query(SearchLogs)
-
-    if year is not None:
-        base_query = base_query.filter(SearchLogs.year == year)
-    if semester is not None:
-        base_query = base_query.filter(SearchLogs.semester == semester)
+    base_query = apply_search_log_filters(
+        base_query,
+        year=year,
+        semester=semester,
+        start_date=start_date,
+        end_date=end_date,
+        code=code,
+    )
 
     total_searches = base_query.count()
 
     if total_searches == 0:
         return 0
 
+    subquery = db.session.query(
+        SearchLogs.code,
+        db.func.count(SearchLogs.id).label("cnt")
+    )
+    subquery = apply_search_log_filters(
+        subquery,
+        year=year,
+        semester=semester,
+        start_date=start_date,
+        end_date=end_date,
+        code=code,
+    )
     subquery = (
-        db.session.query(
-            SearchLogs.code,
-            db.func.count(SearchLogs.id).label("cnt")
-        )
-        .filter(
-            *(f for f in [
-                SearchLogs.year == year if year is not None else None,
-                SearchLogs.semester == semester if semester is not None else None,
-            ] if f is not None)
-        )
-        .group_by(SearchLogs.code)
+        subquery.group_by(SearchLogs.code)
         .order_by(db.desc("cnt"))
         .limit(50)
         .subquery()
@@ -491,9 +525,27 @@ def create_courses_callbacks(dash_app):
 
         box_style, left_box_style, middle_box_style, right_box_style = get_box_styles()
 
-        num_courses = get_num_unique_courses()
-        median_num_searches = get_median_searches_per_course(year=year, semester=semester)
-        top_10_percent = get_searches_for_top_50_courses(year=year, semester=semester)
+        num_courses = get_num_unique_courses(
+            year=year,
+            semester=semester,
+            start_date=new_start_date_str,
+            end_date=end_date_str,
+            code=code,
+        )
+        median_num_searches = get_median_searches_per_course(
+            year=year,
+            semester=semester,
+            start_date=new_start_date_str,
+            end_date=end_date_str,
+            code=code,
+        )
+        top_10_percent = get_searches_for_top_50_courses(
+            year=year,
+            semester=semester,
+            start_date=new_start_date_str,
+            end_date=end_date_str,
+            code=code,
+        )
 
         content = html.Div([
             html.Div([
