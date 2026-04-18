@@ -77,7 +77,7 @@ wheels = [
 
 [[package]]
 name = "dash"
-version = "3.0.4"
+version = "4.1.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "flask" },
@@ -90,9 +90,9 @@ dependencies = [
     { name = "typing-extensions" },
     { name = "werkzeug" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/88/6d/90f113317d41266e20190185cf1b5121efbab79ff79b2ecdf8316a91be40/dash-3.0.4.tar.gz", hash = "sha256:4f9e62e9d8c5cd1b42dc6d6dcf211fe9498195f73ef0edb62a26e2a1b952a368", size = 7592060, upload-time = "2025-04-24T19:06:49.287Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/44/da/a13ae3a6528bd51a6901461dbff4549c6009de203d6249a89b9a09ac5cfb/dash-4.1.0.tar.gz", hash = "sha256:17a92a87b0c1eacc025079a705e44e72cd4c5794629c0a2909942b611faeb595", size = 6927689, upload-time = "2026-03-23T20:39:47.578Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/0d/20/2e7ab37ea2ef1f8b2592a2615c8b3fb041ad51f32101061d8bc6465b8b40/dash-3.0.4-py3-none-any.whl", hash = "sha256:177f8c3d1fa45555b18f2f670808eba7803c72a6b1cd6fd172fd538aca18eb1d", size = 7935680, upload-time = "2025-04-24T19:06:41.751Z" },
+    { url = "https://files.pythonhosted.org/packages/2a/00/10b1f8b3885fc4add1853e9603af15c593fa0be20d37c158c4d811e868dc/dash-4.1.0-py3-none-any.whl", hash = "sha256:1af9f302bc14061061012cdb129b7e370d3604b12a7f730b252ad8e4966f01f7", size = 7232489, upload-time = "2026-03-23T20:39:40.658Z" },
 ]
 
 [[package]]
@@ -722,7 +722,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "beautifulsoup4", specifier = ">=4.11.1" },
-    { name = "dash", specifier = ">=3.0.4" },
+    { name = "dash", specifier = ">=3.4.0" },
     { name = "dash-bootstrap-components", specifier = ">=2.0.4" },
     { name = "flask", specifier = ">=3.0.3" },
     { name = "flask-caching", specifier = ">=2.3.1" },
