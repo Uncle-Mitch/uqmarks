@@ -40,7 +40,7 @@ class IncorrectCourseProfileError(Exception):
     def __init__(self, course: str, sem: int, year: int):
         self.message = f"The course profile URL given does not match course '{course}' for Semester {sem} {year}"
         if sem == 3:
-            self.message = f"The course profile URL given does not match course '{course}' for the Summer Semester {year}-{int(year) + 1}"
+            self.message = f"The course profile URL given does not match course '{course}' for Summer Semester {year}-{int(year) + 1}"
         super().__init__(self.message)
         
 class WrongSemesterError(Exception):
@@ -68,7 +68,7 @@ def get_table_old(section_code, course_code, semester, year):
     html = page.text.replace('<br />','||')
 
     if page.status_code != 200 or not html.strip() or "<table" not in html.lower():
-        raise CourseMissingError(section_code)
+        raise IncorrectCourseProfileError(course_code, semester, year)
 
     expected_semester_text = f"Sem {semester} {year}"
     if semester == 3:
