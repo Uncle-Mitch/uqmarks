@@ -10,6 +10,22 @@ from io import StringIO
 
 THIS_FOLDER = (Path(__file__).parent / "data").resolve()
 
+
+def validate_legacy_ecp(html: str, desired_course_code: str, desired_semester_text: str) -> bool:
+    soup = BeautifulSoup(html, 'html.parser')
+    title = soup.find('h1', class_='page__title')
+    breadcrumb = soup.find('div', class_='page__breadcrumb')
+
+    if not (title and breadcrumb):
+        return False
+
+    title_text = title.get_text(" ", strip=True)
+    breadcrumb_text = breadcrumb.get_text(" ", strip=True)
+    normalized_breadcrumb = breadcrumb_text.replace("Semester ", "Sem ").replace(",", "")
+    if desired_course_code in title_text and desired_semester_text in normalized_breadcrumb:
+        return True
+    return False
+
 class CourseMissingError(Exception):
     def __init__(self, course: str):
         self.message = f"The course '{course}' has not been documented yet."
@@ -21,11 +37,10 @@ class CourseNotFoundError(Exception):
         super().__init__(self.message)
 
 class IncorrectCourseProfileError(Exception):
-    def __init__(self, course: str, sem: str, year: str):
+    def __init__(self, course: str, sem: int, year: int):
         self.message = f"The course profile URL given does not match course '{course}' for Semester {sem} {year}"
-        if sem == "3":
-            year_int = int(year)
-            self.message = f"The course profile URL given does not match course '{course}' for Semester {sem} {year}-{year_int+1}"
+        if sem == 3:
+            self.message = f"The course profile URL given does not match course '{course}' for the Summer Semester {year}-{int(year) + 1}"
         super().__init__(self.message)
         
 class WrongSemesterError(Exception):
@@ -36,7 +51,7 @@ class WrongSemesterError(Exception):
         super().__init__(self.message)
 
 
-def get_table_old(section_code):
+def get_table_old(section_code, course_code, semester, year):
     """Get table for courses before 2024 Semester 2
 
     Args:
@@ -50,10 +65,21 @@ def get_table_old(section_code):
     )
     url = f'https://www.courses.uq.edu.au/student_section_report.php?report=assessment&profileIds={section_code}'
     page = requests.get(url, headers=headers)
+    html = page.text.replace('<br />','||')
+
+    if page.status_code != 200 or not html.strip() or "<table" not in html.lower():
+        raise CourseMissingError(section_code)
+
+    expected_semester_text = f"Sem {semester} {year}"
+    if semester == 3:
+        expected_semester_text = f"Summer {year}"
+
+    if not validate_legacy_ecp(html, course_code, expected_semester_text):
+        raise IncorrectCourseProfileError(course_code, semester, year)
 
     #Replace with BR to deal with the following:
     # Computer Exercise <br /> Assignment 1
-    df_list = pd.read_html(StringIO(page.text.replace('<br />','||')))
+    df_list = pd.read_html(StringIO(html))
     df = df_list[1] # Gets the asessment table
     df = df.drop(columns=["Course", "Due Date"])
 
@@ -110,7 +136,7 @@ def get_table(semester, year, course_code, section_code):
     
     # For previous semesters, use old version of course profile
     if (year == 2024 and semester == 1)or year < 2024:
-        return get_table_old(section_code)
+        return get_table_old(section_code, course_code, semester, year)
     
     url = f'https://course-profiles.uq.edu.au/course-profiles/{section_code}#assessment'
     page = requests.get(url, headers=headers)
