@@ -5,6 +5,7 @@ import os
 import time
 import pandas as pd
 from pathlib import Path
+from io import StringIO
 
 
 THIS_FOLDER = (Path(__file__).parent / "data").resolve()
@@ -52,7 +53,7 @@ def get_table_old(section_code):
 
     #Replace with BR to deal with the following:
     # Computer Exercise <br /> Assignment 1
-    df_list = pd.read_html(page.text.replace('<br />','||'))
+    df_list = pd.read_html(StringIO(page.text.replace('<br />','||')))
     df = df_list[1] # Gets the asessment table
     df = df.drop(columns=["Course", "Due Date"])
 
