@@ -14,7 +14,7 @@ ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
 RUN npm run build
 
 # ---------- Backend (runtime) stage ----------
-FROM python:3.11-slim AS backend
+FROM python:3.14-slim AS backend
 
 
 ENV PYTHONDONTWRITEBYTECODE=1
