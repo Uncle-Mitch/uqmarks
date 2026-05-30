@@ -4,7 +4,8 @@ updates:
     directory: "/"
     target-branch: "master"
     schedule:
-      interval: "weekly"
+      interval: "monthly"
+    open-pull-requests-limit: 1
     groups:
       all-dependencies:
         patterns:
@@ -13,7 +14,8 @@ updates:
   - package-ecosystem: "npm"
     directory: "/react-app"
     schedule:
-      interval: "weekly"
+      interval: "monthly"
+    open-pull-requests-limit: 1
     groups:
       all-dependencies:
         patterns:

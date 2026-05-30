@@ -3,6 +3,8 @@
   "extends": ["config:recommended"],
   "labels": ["dependencies"],
   "dependencyDashboard": true,
+  "minimumReleaseAge": "30 days",
+  "internalChecksFilter": "strict",
   "rangeStrategy": "bump",
   "packageRules": [
     {
