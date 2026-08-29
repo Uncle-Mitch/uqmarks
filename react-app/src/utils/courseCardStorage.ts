@@ -30,6 +30,11 @@ export function getStoredCourseCards(): StoredCourseCards | null {
             localStorage.removeItem(COURSE_CARDS_STORAGE_KEY);
         }
     } catch {
+        try {
+            localStorage.removeItem(COURSE_CARDS_STORAGE_KEY);
+        } catch {
+            // Ignore (localStorage may be unavailable).
+        }
         // Continue to the legacy cookie migration when localStorage is unavailable or corrupt.
     }
 
