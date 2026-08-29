@@ -89,6 +89,7 @@ import CourseCardItem from "../components/CourseCardItem.vue";
 import GradeDetailsDialog from "../components/GradeDetailsDialog.vue";
 import { getWith1DayExpiry, setWith1DayExpiry } from "../utils/localStorageRetrieval.ts";
 import { getJsonCookie, setJsonCookie } from "../utils/cookieStorage";
+import { getStoredCourseCards, saveCourseCards } from "../utils/courseCardStorage";
 import { useTheme } from "vuetify";
 import type { CourseCard, GradeDetailsRow, SemesterOption, StoredCard } from "../types/home";
 import { calculateTotalScore, getGradeDetailsRows, isWeightValid } from "../utils/courseCardCalculations";
@@ -100,7 +101,6 @@ const baseUrl = import.meta.env.VITE_API_BASE_URL;
 
 const MAX_CARDS = 40;
 const RECENT_SEARCHES_COOKIE = "uqm_recent_searches";
-const COURSE_CARDS_COOKIE = "uqm_course_cards";
 const semesterOptions = ref<SemesterOption[]>([]);
 const cards = ref<CourseCard[]>([]);
 const addError = ref("");
@@ -179,7 +179,7 @@ const gradeCutoffs = [
 ];
 
 onMounted(() => {
-    restoreCardsFromCookie();
+    restoreCardsFromStorage();
     void loadSemesterOptions();
     void sendPageLoadAnalytics();
 });
@@ -374,11 +374,13 @@ function persistCards() {
                 collapsed: card.collapsed,
             })),
     };
-    setJsonCookie(COURSE_CARDS_COOKIE, payload, { days: 30 });
+    if (!saveCourseCards(payload)) {
+        addError.value = "Your courses could not be saved on this device.";
+    }
 }
 
-function restoreCardsFromCookie() {
-    const stored = getJsonCookie<{ cards: StoredCard[] }>(COURSE_CARDS_COOKIE);
+function restoreCardsFromStorage() {
+    const stored = getStoredCourseCards();
     if (!stored?.cards?.length) return;
     cards.value = stored.cards.slice(0, MAX_CARDS).map((card) => {
         const restored = reactive<CourseCard>({
