@@ -544,15 +544,15 @@ wheels = [
 
 [[package]]
 name = "plotly"
-version = "6.1.1"
+version = "7.1.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "narwhals" },
     { name = "packaging" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/8a/7c/f396bc817975252afbe7af102ce09cd12ac40a8e90b8699a857d1b15c8a3/plotly-6.1.1.tar.gz", hash = "sha256:84a4f3d36655f1328fa3155377c7e8a9533196697d5b79a4bc5e905bdd09a433", size = 7543694, upload-time = "2025-05-20T20:09:31.935Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/49/c3/72b369f5ed7701b04ab0ea3dcf83e9bbce71c0b3bc6f07f87568550d09ea/plotly-7.1.0.tar.gz", hash = "sha256:f860166a4a3d78c69cb1f4a15f28a5c8283eade98a282a698f3bb853a449ace5", size = 6689315, upload-time = "2026-09-15T19:21:21.75Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/75/f3/f8cb7066f761e2530e1280889e3413769891e349fca35ee7290e4ace35f5/plotly-6.1.1-py3-none-any.whl", hash = "sha256:9cca7167406ebf7ff541422738402159ec3621a608ff7b3e2f025573a1c76225", size = 16118469, upload-time = "2025-05-20T20:09:26.196Z" },
+    { url = "https://files.pythonhosted.org/packages/e5/7d/905a3a3d51087515719058c94cfbda2ff0fc14417c20d557ae3e82d8b250/plotly-7.1.0-py3-none-any.whl", hash = "sha256:dbb7fa18afce40d0a8e80d1bf162eceb3faa0ce5a77fe741ad09a74cf78f53f3", size = 9692368, upload-time = "2026-09-15T19:21:18.331Z" },
 ]
 
 [[package]]
@@ -835,7 +835,7 @@ requires-dist = [
     { name = "gunicorn", specifier = ">=23.0.0" },
     { name = "lxml", specifier = ">=5.3.0" },
     { name = "pandas", specifier = ">=2.2.3" },
-    { name = "plotly", specifier = ">=6.1.1" },
+    { name = "plotly", specifier = ">=6.9.0" },
     { name = "psycopg2-binary", specifier = ">=2.9.11" },
     { name = "python-dateutil", specifier = ">=2.8.2" },
     { name = "python-dotenv", specifier = ">=1.0.1" },
