@@ -23,6 +23,7 @@ export type CourseCard = {
     totalScore: number;
     weightValid: boolean;
     targetGrade: number;
+    roundFinalGrade: boolean;
 };
 
 export type StoredCard = {
@@ -31,6 +32,7 @@ export type StoredCard = {
     semesterLabel: string;
     dataSource: AssessmentItem[];
     targetGrade: number;
+    roundFinalGrade?: boolean;
     collapsed?: boolean;
 };
 
@@ -38,7 +40,7 @@ export type GradeDetailsRow = {
     key: number;
     grade: number;
     cutoff: number;
-    requiredPercent: number;
+    requiredPercent: number | null;
     requiredScore: string;
     achieved: boolean;
     obtainable: boolean;
@@ -50,9 +52,12 @@ export type GradeCutoff = {
 };
 
 export type TargetSummary = {
-    requiredPercent: number;
+    requiredPercent: number | null;
     requiredScore: string;
     remainingWeight: number;
+    achieved: boolean;
+    obtainable: boolean;
+    shortfall: number;
 };
 
 export type SemesterOption = {

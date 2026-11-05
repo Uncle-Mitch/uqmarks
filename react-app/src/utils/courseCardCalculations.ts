@@ -60,43 +60,53 @@ export function calculateImpossibleStart(items: AssessmentItem[]) {
     return clampPercent(score + remainingWeight * 100);
 }
 
+// Rounding the course total makes each whole-number cutoff reachable half a point earlier.
+export function getEffectiveCutoff(cutoff: number, roundFinalGrade = false) {
+    return Math.max(0, cutoff - (roundFinalGrade ? 0.5 : 0));
+}
+
 export function getTargetSummary(
     items: AssessmentItem[],
     targetGrade: number,
     gradeCutoffs: GradeCutoff[],
+    roundFinalGrade = false,
 ): TargetSummary {
     const { score, totalWeight } = calculateTotalScore(items);
     const gradeInfo = gradeCutoffs.find((info) => info.grade === targetGrade) ?? gradeCutoffs[0];
     const remainingWeight = Number.isNaN(totalWeight) ? 1 : Math.max(1 - totalWeight, 0);
-    const requiredIncrease = Math.max(gradeInfo.cutoff - score, 0);
-    const requiredPercent = remainingWeight > 0 ? requiredIncrease / remainingWeight : 0;
+    const requiredIncrease = Math.max(getEffectiveCutoff(gradeInfo.cutoff, roundFinalGrade) - score, 0);
+    const achieved = requiredIncrease === 0;
+    const obtainable = requiredIncrease <= remainingWeight * 100 + 1e-9;
+    const requiredPercent = remainingWeight > 0 ? requiredIncrease / remainingWeight : achieved ? 0 : null;
 
     return {
-        requiredPercent: Math.max(parseFloat(requiredPercent.toFixed(2)), 0),
-        requiredScore: `${requiredIncrease.toFixed(2)}/${Math.round(remainingWeight * 100)}`,
-        remainingWeight: Math.round(remainingWeight * 100),
+        requiredPercent: requiredPercent === null ? null : Math.max(parseFloat(requiredPercent.toFixed(2)), 0),
+        requiredScore:
+            remainingWeight > 0
+                ? `${requiredIncrease.toFixed(2)}/${parseFloat((remainingWeight * 100).toFixed(2))}`
+                : "N/A",
+        remainingWeight: parseFloat((remainingWeight * 100).toFixed(2)),
+        achieved,
+        obtainable,
+        shortfall: parseFloat(requiredIncrease.toFixed(2)),
     };
 }
 
-export function getGradeDetailsRows(items: AssessmentItem[], gradeCutoffs: GradeCutoff[]): GradeDetailsRow[] {
-    const { score, totalWeight } = calculateTotalScore(items);
-    const remainingWeight = Number.isNaN(totalWeight) ? 1 : Math.max(1 - totalWeight, 0);
-
+export function getGradeDetailsRows(
+    items: AssessmentItem[],
+    gradeCutoffs: GradeCutoff[],
+    roundFinalGrade = false,
+): GradeDetailsRow[] {
     return gradeCutoffs.map((info) => {
-        const requiredIncrease = info.cutoff - score;
-        const requiredIncreaseCapped = Math.max(requiredIncrease, 0);
-        const requiredPercent = remainingWeight > 0 ? requiredIncreaseCapped / remainingWeight : 0;
-        const obtainable = remainingWeight > 0 && requiredIncrease <= remainingWeight * 100;
-        const fmt = (value: number) => (value === 0 ? "0" : parseFloat(value.toFixed(2)).toString());
-
+        const summary = getTargetSummary(items, info.grade, gradeCutoffs, roundFinalGrade);
         return {
             key: info.grade,
             grade: info.grade,
-            cutoff: info.cutoff,
-            requiredPercent: Math.max(parseFloat(requiredPercent.toFixed(2)), 0),
-            requiredScore: `${fmt(requiredIncreaseCapped)}/${Math.round(remainingWeight * 100)}`,
-            achieved: score >= info.cutoff,
-            obtainable,
+            cutoff: getEffectiveCutoff(info.cutoff, roundFinalGrade),
+            requiredPercent: summary.requiredPercent,
+            requiredScore: summary.requiredScore,
+            achieved: summary.achieved,
+            obtainable: summary.obtainable,
         };
     });
 }

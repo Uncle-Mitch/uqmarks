@@ -28,6 +28,9 @@
                     class="results-table"
                     :loading="props.selectedCard?.loading ?? false"
                 >
+                    <template #item.requiredPercent="{ item }">
+                        {{ item.achieved ? "Achieved" : !item.obtainable ? "Unreachable" : `${item.requiredPercent}%` }}
+                    </template>
                     <template #loading>
                         <v-skeleton-loader type="table-row@7"></v-skeleton-loader>
                     </template>

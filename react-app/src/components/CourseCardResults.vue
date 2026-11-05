@@ -10,8 +10,23 @@
                             class="text-h5 font-weight-bold"
                             style="line-height: 1"
                         >
-                            {{ props.card.totalScore.toFixed(2) }}%
+                            {{
+                                props.card.roundFinalGrade
+                                    ? Math.round(props.card.totalScore)
+                                    : props.card.totalScore.toFixed(2)
+                            }}%
                         </GradientText>
+                        <v-chip
+                            v-if="props.card.roundFinalGrade"
+                            size="x-small"
+                            class="rounded-chip"
+                            color="secondary"
+                            variant="flat"
+                            :title="`Unrounded total: ${props.card.totalScore.toFixed(2)}%`"
+                            :aria-label="`Rounded to nearest whole percent. Unrounded total: ${props.card.totalScore.toFixed(2)}%`"
+                        >
+                            Rounded
+                        </v-chip>
                     </div>
                     <v-btn variant="flat" size="x-small" color="accent" @click.stop="emit('open-details')">
                         More details
@@ -69,13 +84,30 @@
                         <div class="goal-summary-item">
                             <span class="text-caption text-medium-emphasis text-uppercase">Need</span>
                             <span class="goal-summary-value">
-                                {{ props.targetSummary.requiredPercent }}% on remaining
-                                {{ props.targetSummary.remainingWeight }}%
+                                <template v-if="props.targetSummary.achieved">Target achieved</template>
+                                <template
+                                    v-else-if="
+                                        !props.targetSummary.obtainable && props.targetSummary.remainingWeight === 0
+                                    "
+                                >
+                                    Target unreachable
+                                </template>
+                                <template v-else>
+                                    {{ props.targetSummary.requiredPercent }}% on remaining
+                                    {{ props.targetSummary.remainingWeight }}%
+                                </template>
                             </span>
                         </div>
                         <div class="goal-summary-item">
                             <span class="text-caption text-medium-emphasis text-uppercase">Required score</span>
-                            <span class="goal-summary-value">{{ props.targetSummary.requiredScore }}</span>
+                            <span class="goal-summary-value">
+                                <template
+                                    v-if="props.targetSummary.remainingWeight === 0 && !props.targetSummary.achieved"
+                                >
+                                    {{ props.targetSummary.shortfall }} percentage points short
+                                </template>
+                                <template v-else>{{ props.targetSummary.requiredScore }}</template>
+                            </span>
                         </div>
                     </div>
                 </div>
@@ -115,6 +147,12 @@ const totalScoreGradientProps = computed(() => ({
 </script>
 
 <style lang="scss" scoped>
+.rounded-chip {
+    align-self: center;
+    background-color: rgb(var(--v-theme-secondary)) !important;
+    color: rgb(var(--v-theme-on-secondary)) !important;
+}
+
 .goal-card {
     padding: 0.75rem 1rem;
     border: 1px solid rgba(var(--v-theme-surfaceBorder), 0.7);

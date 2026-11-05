@@ -13,6 +13,23 @@
                 />
             </v-col>
         </v-row>
+        <v-row justify="center" class="rounding-row">
+            <v-col cols="12" md="8">
+                <v-sheet class="settings-panel text-left" rounded="lg" elevation="0">
+                    <h2 class="settings-heading">Settings</h2>
+                    <v-switch
+                        :model-value="roundFinalGrade"
+                        label="Round final grades"
+                        class="rounding-switch"
+                        color="secondary"
+                        density="compact"
+                        inset
+                        hide-details
+                        @update:model-value="(value) => setRounding(!!value)"
+                    />
+                </v-sheet>
+            </v-col>
+        </v-row>
         <v-row justify="center" v-if="addError">
             <v-col cols="12" md="8">
                 <v-alert
@@ -103,6 +120,7 @@ const MAX_CARDS = 40;
 const RECENT_SEARCHES_COOKIE = "uqm_recent_searches";
 const semesterOptions = ref<SemesterOption[]>([]);
 const cards = ref<CourseCard[]>([]);
+const roundFinalGrade = ref(false);
 const addError = ref("");
 const recentSearches = ref<Array<{ courseCode: string; semesterId: string }>>(
     getJsonCookie(RECENT_SEARCHES_COOKIE) ?? [],
@@ -142,7 +160,11 @@ const selectedDetailsCard = computed(() =>
 );
 const selectedDetailsRows = computed<GradeDetailsRow[]>(() => {
     if (!selectedDetailsCard.value) return [];
-    return getGradeDetailsRows(selectedDetailsCard.value.dataSource, gradeCutoffs);
+    return getGradeDetailsRows(
+        selectedDetailsCard.value.dataSource,
+        gradeCutoffs,
+        selectedDetailsCard.value.roundFinalGrade,
+    );
 });
 const resultsHeaders = [
     { title: "Grade", value: "grade" },
@@ -238,6 +260,7 @@ function handleSearchSubmit(payload: { courseCode: string; semesterId: string })
         totalScore: 0,
         weightValid: true,
         targetGrade: 5,
+        roundFinalGrade: roundFinalGrade.value,
     });
     cards.value = [newCard, ...cards.value];
     fetchCourseData(newCard);
@@ -359,9 +382,16 @@ function saveRecentSearch(card: CourseCard) {
     recentSearches.value = updated;
 }
 
+function setRounding(enabled: boolean) {
+    roundFinalGrade.value = enabled;
+    for (const card of cards.value) card.roundFinalGrade = enabled;
+    persistCards();
+}
+
 function persistCards() {
     const payload = {
         version: 1,
+        roundFinalGrade: roundFinalGrade.value,
         updatedAt: new Date().toISOString(),
         cards: cards.value
             .filter((card) => card.validInput && !card.showURLRequest)
@@ -372,6 +402,7 @@ function persistCards() {
                 dataSource: card.dataSource,
                 targetGrade: card.targetGrade,
                 collapsed: card.collapsed,
+                roundFinalGrade: card.roundFinalGrade,
             })),
     };
     if (!saveCourseCards(payload)) {
@@ -381,7 +412,8 @@ function persistCards() {
 
 function restoreCardsFromStorage() {
     const stored = getStoredCourseCards();
-    if (!stored?.cards?.length) return;
+    if (!stored) return;
+    roundFinalGrade.value = stored.roundFinalGrade === true;
     cards.value = stored.cards.slice(0, MAX_CARDS).map((card) => {
         const restored = reactive<CourseCard>({
             id: makeId(),
@@ -398,6 +430,7 @@ function restoreCardsFromStorage() {
             totalScore: 0,
             weightValid: true,
             targetGrade: card.targetGrade ?? 5,
+            roundFinalGrade: roundFinalGrade.value,
         });
         refreshCardSummary(restored);
         return restored;
@@ -428,6 +461,42 @@ async function sendPageLoadAnalytics() {
 </script>
 
 <style lang="scss" scoped>
+.rounding-row > .v-col {
+    padding-top: 0;
+    padding-bottom: 0;
+}
+
+.settings-panel {
+    padding: 10px 16px;
+    border: 1px solid rgba(var(--v-theme-surfaceBorder), 0.7);
+}
+
+.settings-heading {
+    margin-bottom: 2px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: rgba(var(--v-theme-on-surface), 0.75);
+}
+
+.rounding-switch {
+    flex: 0 0 auto;
+    margin: 0;
+}
+
+.rounding-switch :deep(.v-selection-control__wrapper) {
+    width: 36px !important;
+    transform: scale(0.6);
+}
+
+.rounding-switch :deep(.v-selection-control) {
+    min-height: 40px;
+}
+
+.rounding-switch :deep(.v-label) {
+    padding-inline-start: 6px;
+    font-size: 0.8125rem;
+}
+
 .add-error-alert :deep(.v-alert__append) {
     margin-left: auto;
 }

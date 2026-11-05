@@ -5,6 +5,7 @@ const COURSE_CARDS_STORAGE_KEY = "uqm_course_cards";
 const LEGACY_COURSE_CARDS_COOKIE = "uqm_course_cards";
 
 export type StoredCourseCards = {
+    roundFinalGrade?: boolean;
     cards: StoredCard[];
 };
 
