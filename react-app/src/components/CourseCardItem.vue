@@ -321,11 +321,11 @@ function setTargetGrade(grade: number) {
 }
 
 function getTimelineScore() {
-    return timelineScore.value;
+    return card.roundFinalGrade ? Math.round(timelineScore.value) : timelineScore.value;
 }
 
 function getDebouncedImpossibleStart() {
-    return timelineImpossibleStart.value;
+    return card.roundFinalGrade ? Math.round(timelineImpossibleStart.value) : timelineImpossibleStart.value;
 }
 
 function isGradePassed(cutoff: number) {
@@ -333,7 +333,7 @@ function isGradePassed(cutoff: number) {
 }
 
 function getCardTargetSummary(): TargetSummary {
-    return getTargetSummary(card.dataSource, card.targetGrade, gradeCutoffs);
+    return getTargetSummary(card.dataSource, card.targetGrade, gradeCutoffs, card.roundFinalGrade);
 }
 
 recalculateCard();
