@@ -1,19 +1,13 @@
-import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
-import { test } from "node:test";
-import ts from "typescript";
+import { assert, test } from "vitest";
+import { getTargetSummary, getGradeDetailsRows } from "./courseCardCalculations";
+import type { AssessmentItem, GradeCutoff } from "../types/home";
 
-const source = await readFile(new URL("./courseCardCalculations.ts", import.meta.url), "utf8");
-const { outputText } = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.ESNext } });
-const { getTargetSummary, getGradeDetailsRows } = await import(
-    `data:text/javascript;base64,${Buffer.from(outputText).toString("base64")}`
-);
-const cutoffs = [
+const cutoffs: GradeCutoff[] = [
     { grade: 1, cutoff: 0 },
     { grade: 5, cutoff: 65 },
     { grade: 7, cutoff: 85 },
 ];
-const item = (score, weight = "100%") => ({
+const item = (score: string, weight = "100%"): AssessmentItem => ({
     key: 0,
     assessment: "Exam",
     score,
