@@ -19,7 +19,9 @@
                         <v-chip
                             v-if="props.card.roundFinalGrade"
                             size="x-small"
-                            variant="tonal"
+                            class="rounded-chip"
+                            color="secondary"
+                            variant="flat"
                             :title="`Unrounded total: ${props.card.totalScore.toFixed(2)}%`"
                             :aria-label="`Rounded to nearest whole percent. Unrounded total: ${props.card.totalScore.toFixed(2)}%`"
                         >
@@ -145,6 +147,12 @@ const totalScoreGradientProps = computed(() => ({
 </script>
 
 <style lang="scss" scoped>
+.rounded-chip {
+    align-self: center;
+    background-color: rgb(var(--v-theme-secondary)) !important;
+    color: rgb(var(--v-theme-on-secondary)) !important;
+}
+
 .goal-card {
     padding: 0.75rem 1rem;
     border: 1px solid rgba(var(--v-theme-surfaceBorder), 0.7);
