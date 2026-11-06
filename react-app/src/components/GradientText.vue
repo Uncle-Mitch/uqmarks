@@ -26,4 +26,12 @@ const props = defineProps({
 .gradient-text {
     font-weight: 700;
 }
+
+.gradient-text.page-heading {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: clamp(32px, 4vw, 48px);
+    font-weight: 700;
+    letter-spacing: -1.5px;
+    line-height: 1.15;
+}
 </style>

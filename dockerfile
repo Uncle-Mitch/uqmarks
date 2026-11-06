@@ -32,6 +32,7 @@ COPY . .
 
 # Bring in built frontend assets
 COPY --from=frontend /app/react-app/dist ./react-app/dist
+COPY --from=frontend /app/assets/analytics-theme.js ./assets/analytics-theme.js
 
 ENV PATH="/app/.venv/bin:$PATH"
 

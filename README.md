@@ -87,6 +87,21 @@ This allows you to run the app in debug mode, with hot reload.
    npm run dev
    ```
 
+## Preview analytics with fake data
+
+Run the standalone development server instead of `python app.py`:
+
+```powershell
+.venv/Scripts/python.exe dev_analytics.py
+```
+
+Then run `npm run dev` from `react-app` and open `/analytics` in Vite
+(usually http://localhost:5173/analytics). The existing development API URL
+points to this server on port 5000. All three analytics views and filters use
+40,000 generated searches across 80 courses over the past year. No database
+connection or database writes are needed. Restarting the regular backend
+restores real data. Other app APIs are not provided by this preview server.
+
 ## Dependency Management (uv)
 
 Use `pyproject.toml` and `uv.lock` as the only dependency source.
@@ -102,3 +117,12 @@ uv sync
 ## License
 
 MIT
+
+## Dash theme source
+
+Edit `react-app/dash/analytics-theme.ts` for the embedded dashboard theme bridge.
+`npm run dev` and `npm run build` in `react-app` compile it to
+`assets/analytics-theme.js`, which Dash serves as a browser script. Keep the generated
+file alongside the Python app so running the backend alone still works.
+For live TypeScript edits, run `npm run dev:dash` in a separate terminal.
+`npm run typecheck` also checks the Dash TypeScript source.

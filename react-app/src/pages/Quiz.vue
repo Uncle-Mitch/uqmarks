@@ -4,7 +4,7 @@
             :from="theme.global.current.value.colors.titleGradientFrom"
             :to="theme.global.current.value.colors.titleGradientTo"
             tag="h1"
-            class="text-primary text-h3 font-weight-bold"
+            class="page-heading"
         >
             Quiz Calculator
         </GradientText>

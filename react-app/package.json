@@ -4,14 +4,16 @@
     "version": "0.0.0",
     "type": "module",
     "scripts": {
-        "dev": "vite",
+        "dev": "npm run build:dash && vite",
         "test": "vitest run",
-        "build": "tsc -b && vite build",
+        "build": "npm run build:dash && tsc -b && vite build",
         "lint": "eslint .",
         "preview": "vite preview",
-        "typecheck": "vue-tsc --noEmit",
+        "typecheck": "vue-tsc --noEmit && tsc -p tsconfig.dash.json --noEmit",
         "format": "prettier --write .",
-        "format:check": "prettier --check ."
+        "format:check": "prettier --check .",
+        "build:dash": "tsc -p tsconfig.dash.json",
+        "dev:dash": "tsc -p tsconfig.dash.json --watch"
     },
     "dependencies": {
         "@fortawesome/fontawesome-free": "^7.1.0",
