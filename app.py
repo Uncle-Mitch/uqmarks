@@ -18,6 +18,7 @@ import ipaddress
 from dotenv import load_dotenv
 from flask_cache import cache, get_semester_list, get_cached_df, get_announcement, init_cache
 from dash_app import create_dash_app
+from http_metrics import instrument_app
 from db_connection import db, Course, SearchLogs, create_database, run_startup_migrations
 import requests
 
@@ -27,6 +28,7 @@ load_dotenv()
 THIS_FOLDER = (Path(__file__).parent / "data").resolve()
 DB_NAME = THIS_FOLDER / "course.sqlite"
 app = Flask(__name__, static_folder="./react-app/dist", static_url_path="")
+instrument_app(app)
 app.config['SECRET_KEY'] = os.environ['SECRET_KEY']
 app.config['SQLALCHEMY_DATABASE_URI'] = f"postgresql://{os.getenv('POSTGRES_USER')}:{os.getenv('POSTGRES_PASSWORD')}@{os.getenv('POSTGRES_HOST', 'localhost')}:{os.getenv('POSTGRES_PORT', 5432)}/{os.getenv('POSTGRES_DB')}"
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False

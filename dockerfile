@@ -37,4 +37,4 @@ COPY --from=frontend /app/assets/analytics-theme.js ./assets/analytics-theme.js
 ENV PATH="/app/.venv/bin:$PATH"
 
 EXPOSE 5000
-CMD ["gunicorn", "-b", "0.0.0.0:5000", "--workers", "1", "--threads", "2", "--timeout", "60", "app:app"]
+CMD ["python", "http_metrics.py"]
