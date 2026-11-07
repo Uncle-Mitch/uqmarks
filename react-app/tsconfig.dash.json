@@ -1,0 +1,15 @@
+{
+    "compilerOptions": {
+        "target": "ES2020",
+        "lib": ["ES2020", "DOM", "DOM.Iterable"],
+        "module": "None",
+        "types": [],
+        "strict": true,
+        "noUnusedLocals": true,
+        "noUnusedParameters": true,
+        "noEmitOnError": true,
+        "rootDir": "dash",
+        "outDir": "../assets"
+    },
+    "include": ["dash/**/*.ts"]
+}

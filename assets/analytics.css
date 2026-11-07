@@ -1,0 +1,332 @@
+/* Embedded dashboard theme; synchronized with the parent Vuetify app. */
+:root {
+    color-scheme: dark;
+    font-size: 16px;
+    --analytics-background: #1a0a28;
+    --analytics-surface: #291e35;
+    --analytics-text: #faf7ff;
+    --analytics-muted: #c8bfd2;
+    --analytics-card: #f5f1fa;
+    --analytics-card-text: #21152e;
+    --analytics-filter-text: #faf7ff;
+    --analytics-filter-hover: #40324f;
+    --analytics-border: #493a56;
+    --analytics-primary: #af7de0;
+    --analytics-contrast: #d2aae0;
+    --analytics-accent: #0071e3;
+    --analytics-filter: #32253f;
+    --bs-body-color: var(--analytics-text);
+    --bs-body-bg: var(--analytics-surface);
+    --bs-border-color: var(--analytics-border);
+    --bs-secondary-color: var(--analytics-contrast);
+    --bs-tertiary-bg: var(--analytics-background);
+}
+
+body {
+    margin: 0;
+    background: var(--analytics-background);
+    color: var(--analytics-text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.analytics-summary-value {
+    font-family: inherit;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    font-size: 48px;
+    overflow-wrap: anywhere;
+    line-height: 1.2;
+    letter-spacing: -0.8px;
+}
+
+.analytics-dashboard {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+}
+
+.analytics-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.analytics-summary-card p {
+    color: inherit;
+    opacity: 1;
+    font-size: 24px;
+    font-weight: 400;
+    line-height: 1.25;
+    padding-bottom: 4px;
+}
+
+.analytics-chart {
+    /* Dash responsive=True removes figure height; size the container instead. */
+    height: 440px;
+    width: 100%;
+    overflow: hidden;
+    border-radius: 20px;
+    border: 1px solid var(--analytics-border);
+}
+
+@media (max-width: 760px) {
+    .analytics-summary-grid { grid-template-columns: 1fr; gap: 16px; }
+    .analytics-summary-card { padding: 18px !important; }
+}
+
+.modal-content {
+    --bs-modal-bg: var(--analytics-surface);
+    --bs-modal-color: var(--analytics-text);
+    --bs-modal-border-color: var(--analytics-border);
+    --bs-modal-header-border-color: var(--analytics-border);
+    --bs-modal-footer-border-color: var(--analytics-border);
+}
+
+.analytics-filter-menu {
+    --bs-popover-bg: var(--analytics-surface);
+    --bs-popover-border-color: var(--analytics-border);
+    --bs-popover-header-bg: var(--analytics-surface);
+    --bs-popover-header-color: var(--analytics-text);
+    --bs-popover-body-color: var(--analytics-text);
+    --bs-popover-max-width: 340px;
+    width: 320px;
+    border-radius: 16px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 16px;
+    box-shadow: 0 12px 36px rgb(0 0 0 / 30%);
+}
+
+.analytics-filter-menu-date {
+    --bs-popover-max-width: 380px;
+    width: 360px;
+}
+
+.analytics-filter-menu .popover-header {
+    padding: 16px 18px 12px;
+    font-size: 16px;
+    font-weight: 700;
+    border-bottom-color: var(--analytics-border);
+    border-radius: 16px 16px 0 0;
+}
+
+.analytics-filter-menu .popover-body {
+    padding: 16px 18px;
+}
+
+.analytics-filter-menu .form-check {
+    margin-bottom: 8px;
+}
+
+.analytics-filter-menu .DateRangePicker {
+    margin-top: 12px;
+}
+
+.analytics-filter-actions {
+    display: flex;
+    justify-content: flex-end;
+    padding: 0 18px 16px;
+}
+
+.analytics-filter-actions .btn {
+    min-height: 40px;
+    font-size: 16px;
+    border-radius: 9px;
+}
+
+.btn-primary {
+    --bs-btn-bg: var(--analytics-accent);
+    --bs-btn-border-color: var(--analytics-accent);
+    --bs-btn-hover-bg: #0064c9;
+    --bs-btn-hover-border-color: #0064c9;
+    --bs-btn-active-bg: #005bb6;
+    --bs-btn-active-border-color: #005bb6;
+    --bs-btn-disabled-bg: var(--analytics-border);
+    --bs-btn-disabled-border-color: var(--analytics-border);
+}
+
+.form-control, .form-select, .form-check-input {
+    background-color: var(--analytics-background);
+    border-color: var(--analytics-border);
+    color: var(--analytics-text);
+}
+
+.form-control:focus, .form-select:focus {
+    background-color: var(--analytics-background);
+    border-color: var(--analytics-primary);
+    color: var(--analytics-text);
+    box-shadow: 0 0 0 0.2rem rgb(175 125 224 / 25%);
+}
+
+.form-control::placeholder {
+    color: var(--analytics-contrast);
+    opacity: 0.7;
+}
+
+.form-check-input:checked {
+    background-color: var(--analytics-accent);
+    border-color: var(--analytics-accent);
+}
+
+.btn-close {
+    filter: invert(1) grayscale(100%) brightness(200%);
+}
+
+.date-selector {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 24px;
+}
+
+.analytics-filter {
+    --bs-btn-color: var(--analytics-filter-text);
+    --bs-btn-bg: var(--analytics-filter);
+    --bs-btn-border-color: var(--analytics-filter);
+    --bs-btn-hover-color: var(--analytics-filter-text);
+    --bs-btn-hover-bg: var(--analytics-filter-hover);
+    --bs-btn-hover-border-color: var(--analytics-border);
+    --bs-btn-active-color: var(--analytics-filter-text);
+    --bs-btn-active-bg: var(--analytics-filter);
+    --bs-btn-active-border-color: var(--analytics-filter);
+    --bs-btn-disabled-color: var(--analytics-contrast);
+    --bs-btn-disabled-bg: var(--analytics-filter-text);
+    --bs-btn-disabled-border-color: var(--analytics-border);
+    --bs-btn-focus-shadow-rgb: 169, 202, 239;
+    border-radius: 999px;
+    padding: 10px 14px;
+    min-height: 40px;
+    font-family: inherit;
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 1.4;
+}
+
+.analytics-filter::after {
+    content: "";
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    margin: 0 0 3px 12px;
+    border-right: 1.5px solid currentColor;
+    border-bottom: 1.5px solid currentColor;
+    transform: rotate(45deg);
+}
+
+/* DatePickerRange uses react-dates rather than Bootstrap controls. */
+.DateRangePickerInput, .DateInput, .DateInput_input,
+.DayPicker, .DayPicker__horizontal, .CalendarMonth, .CalendarMonthGrid,
+.CalendarDay__default, .DayPickerNavigation_button__default {
+    background: var(--analytics-background);
+    color: var(--analytics-text);
+    border-color: var(--analytics-border);
+}
+
+.CalendarMonth_caption, .DayPicker_weekHeader,
+.DateRangePickerInput_arrow, .DayPickerKeyboardShortcuts_show {
+    color: var(--analytics-contrast);
+}
+
+.DayPickerNavigation_svg__horizontal {
+    fill: var(--analytics-contrast);
+}
+
+.DateInput_input__focused {
+    border-bottom-color: var(--analytics-primary);
+}
+
+.CalendarDay__default:hover, .DayPickerNavigation_button__default:hover,
+.CalendarDay__hovered_span, .CalendarDay__selected_span {
+    background: var(--analytics-border);
+    border-color: var(--analytics-primary);
+    color: var(--analytics-text);
+}
+
+.CalendarDay__selected, .CalendarDay__selected:hover {
+    background: var(--analytics-accent);
+    border-color: var(--analytics-accent);
+    color: var(--analytics-text);
+}
+
+.CalendarDay__blocked_out_of_range, .CalendarDay__blocked_out_of_range:hover {
+    background: var(--analytics-surface);
+    color: #8e7e9e;
+    border-color: var(--analytics-border);
+}
+
+.DayPickerKeyboardShortcuts_panel {
+    background: var(--analytics-surface);
+    color: var(--analytics-text);
+    border-color: var(--analytics-border);
+}
+
+.DayPicker_weekHeader small, .DayPickerKeyboardShortcuts_panel,
+.DayPickerKeyboardShortcuts_show, .CalendarDay, .DateInput_input {
+    font-size: 16px;
+}
+
+/* Metrics lead; neutral controls and a quieter chart support them. */
+.analytics-summary-card {
+    padding: 28px;
+    min-height: 152px;
+    background: #74b4f4;
+    color: #102940;
+    border: 1px solid transparent;
+    border-radius: 18px;
+}
+.analytics-summary-card:nth-child(2) {
+    background: #c49aeb;
+    color: #2b153e;
+}
+.analytics-summary-card:nth-child(3) {
+    background: #65cbb4;
+    color: #10382f;
+}
+.analytics-summary-card p { letter-spacing: 0.01em; }
+.analytics-filter { border-color: var(--analytics-border); }
+.analytics-filter:focus-visible { outline: 3px solid var(--analytics-primary); outline-offset: 3px; }
+:root[data-bs-theme="light"] {
+    color-scheme: light;
+    --analytics-background: #ffffff;
+    --analytics-surface: #f5f5f7;
+    --analytics-border: #d5cedd;
+    --analytics-primary: #7136a6;
+    --analytics-contrast: #652c9e;
+    --analytics-text: #21152e;
+    --analytics-muted: #62586d;
+    --analytics-card: #f0ecf5;
+    --analytics-card-text: #21152e;
+    --analytics-filter: #f0ecf5;
+    --analytics-filter-text: #21152e;
+    --analytics-filter-hover: #e5ddef;
+}
+:root[data-bs-theme="light"] .btn-close { filter: none; }
+@media (max-width: 600px) {
+    .analytics-summary-grid { grid-template-columns: 1fr; }
+    .analytics-summary-card { min-height: 120px; }
+}
+
+/* Keep unselected choices visible against the filter popover. */
+.analytics-filter-menu .form-check-input[type="radio"] {
+    background-color: #44354f;
+    border: 2px solid #b6a5c7;
+}
+.analytics-filter-menu .form-check-input[type="radio"]:checked {
+    background-color: var(--analytics-accent);
+    border-color: #73baff;
+}
+.analytics-filter-menu .form-check-input[type="radio"]:focus-visible {
+    outline: 3px solid var(--analytics-primary);
+    outline-offset: 3px;
+    box-shadow: none;
+}
+:root[data-bs-theme="light"] .analytics-filter-menu .form-check-input[type="radio"] {
+    background-color: #fff;
+    border-color: #786487;
+}
+:root[data-bs-theme="light"] .analytics-filter-menu .form-check-input[type="radio"]:checked {
+    background-color: var(--analytics-accent);
+    border-color: var(--analytics-accent);
+}

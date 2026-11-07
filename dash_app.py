@@ -1,4 +1,5 @@
-from dash import Dash, dcc, html, Input, Output, State, ctx
+from dash import Dash, dcc, html, Input, Output, ctx
+from dash.exceptions import PreventUpdate
 from datetime import datetime as dt
 import dash_bootstrap_components as dbc
 from analyse_search import *
@@ -254,30 +255,10 @@ def get_box_styles() -> tuple[dict]:
     Returns:
         tuple[dict]: Style for analytics boxes. [all_boxs, left, middle, right]
     """
-    box_style = {
-        'padding': '10px',
-        'width': '250px',
-        'margin': '0',
-        'color': '#FFFFFF'
-    }
-
-    # Define outer box styles with rounded edges
-    left_box_style = {
-        'background-color': '#4285F4',
-        'border-radius': '10px 0 0 10px',
-    }
-
-    # Define middle box style without rounded edges
-    middle_box_style = {
-        'background-color': '#5E35B1',
-        'border-radius': '0', 
-    }
-
-    # Define outer box styles with rounded edges
-    right_box_style = {
-        'background-color': '#00897B',
-        'border-radius': '0 10px 10px 0',
-    }
+    box_style = {'minWidth': '0'}
+    left_box_style = {}
+    middle_box_style = {}
+    right_box_style = {}
     return box_style, left_box_style, middle_box_style, right_box_style
 
 def get_date_str(date_range, start_date, end_date):
@@ -351,7 +332,7 @@ def get_start_and_end_dates(start_date:str, end_date:str, semester, year, sem_lo
     start_date = datetime.strptime(start_date, '%Y-%m-%d').date()
     end_date = datetime.strptime(end_date, '%Y-%m-%d').date()
     
-    if sem_lock:
+    if sem_lock and semester is not None:
         new_start_date, end_date = get_semester_dates(semester, year)
     else:
         new_start_date = get_start_date(date_range, start_date)
@@ -373,20 +354,20 @@ def create_home_callbacks(dash_app):
         ],
         [
         Input('home-date-range-radio', 'value'),
-        Input('home-close-date', 'n_clicks'),
-        Input('home-close-course', 'n_clicks'),
+        Input('home-date-picker-range', 'start_date'),
+        Input('home-date-picker-range', 'end_date'),
+        Input('home-search-input', 'value'),
+        Input('home-semester-select', 'value'),
         Input('home-aggregation-radio', 'value'),
-        Input('home-close-semester', 'n_clicks')
+        Input('home-semester-switch', 'value'),
         ],
-        [
-        State('home-date-picker-range', 'start_date'),
-        State('home-date-picker-range', 'end_date'),
-        State('home-search-input', 'value'),
-        State('home-semester-select', 'value'),
-        State('home-aggregation-radio', 'value'),
-        State('home-semester-switch','value')],
     )
-    def update_output(date_range, date_clicks, course_clicks, aggregate_clicks, semester_clicks, start_date, end_date, code, sem_text, interval, sem_lock):
+    def update_output(date_range, start_date, end_date, code, sem_text, interval, sem_lock):
+        if not start_date or not end_date:
+            raise PreventUpdate
+        if ctx.triggered_id == 'home-search-input' and code and len(code.strip()) != 8:
+            raise PreventUpdate
+
 
         config={
             'displayModeBar': False,
@@ -404,7 +385,7 @@ def create_home_callbacks(dash_app):
 
         engine = get_sqlalchemy_engine()
         if code and len(code) == 8:
-            code = code.upper()
+            code = code.strip().upper()
         else:
             code = None
         grouped_df = group_data_from_db(engine, year=year, semester=semester, interval=interval, start_date=new_start_date_str, end_date=end_date_str, code=code)
@@ -418,7 +399,8 @@ def create_home_callbacks(dash_app):
         else:
             analysis_end_date = end_date
 
-        days_elapsed = (analysis_end_date - new_start_date).days
+        # Search queries include both dates, including a same-day range.
+        days_elapsed = max(1, (analysis_end_date - new_start_date).days + 1)
 
         box_style, left_box_style, middle_box_style, right_box_style = get_box_styles()
 
@@ -434,24 +416,26 @@ def create_home_callbacks(dash_app):
                 # Total Number of Searches
                 html.Div([
                     html.P(f"Total Searches", style={'margin': '0'}),
-                    html.H3(f"{total_searches}", style={'margin': '0'})],
-                    style={**box_style, **left_box_style}
+                    html.H3(f"{total_searches:,}", className='analytics-summary-value', style={'margin': '0'})],
+                    className='analytics-summary-card', style={**box_style, **left_box_style}
                 ),
                 # Top Search Query
                 html.Div([
                     html.P(f"{middle_box_text}", style={'margin': '0'}),
-                    html.H3(f"{middle_box_value}", style={'margin': '0'})],
-                    style={**box_style, **middle_box_style}
+                    html.H3(f"{middle_box_value}", className='analytics-summary-value', style={'margin': '0'})],
+                    className='analytics-summary-card', style={**box_style, **middle_box_style}
                 ),
                 # Average Per Day
                 html.Div([
                     html.P(f"Average Per Day", style={'margin': '0'}),
-                    html.H3(f"{average_per_day:.2f}", style={'margin': '0'})],
-                    style={**box_style, **right_box_style}
+                    html.H3(f"{average_per_day:.2f}", className='analytics-summary-value', style={'margin': '0'})],
+                    className='analytics-summary-card', style={**box_style, **right_box_style}
                 )
-            ], style={'display': 'flex'}),
+            ], className='analytics-summary-grid'),
             dcc.Graph(
                 id='frequency-chart-1',
+                className='analytics-chart',
+                responsive=True,
                 figure=fig1,
                 config=config
             )
@@ -486,18 +470,19 @@ def create_courses_callbacks(dash_app):
         ],
         [
         Input('course-date-range-radio', 'value'),
-        Input('course-close-date', 'n_clicks'),
-        Input('course-close-course', 'n_clicks'),
-        Input('course-close-semester', 'n_clicks')
+        Input('course-date-picker-range', 'start_date'),
+        Input('course-date-picker-range', 'end_date'),
+        Input('course-search-input', 'value'),
+        Input('course-semester-select', 'value'),
+        Input('course-semester-switch', 'value'),
         ],
-        [
-        State('course-date-picker-range', 'start_date'),    
-        State('course-date-picker-range', 'end_date'),
-        State('course-search-input', 'value'),
-        State('course-semester-select', 'value'),
-        State('course-semester-switch','value')],
     )
-    def update_course_output(date_range, date_clicks, course_clicks, semester_clicks, start_date, end_date, code, sem_text, sem_lock):
+    def update_course_output(date_range, start_date, end_date, code, sem_text, sem_lock):
+        if not start_date or not end_date:
+            raise PreventUpdate
+        if ctx.triggered_id == 'course-search-input' and code and len(code.strip()) != 8:
+            raise PreventUpdate
+
         config={
             'displayModeBar': False,
             'displaylogo': False,                                       
@@ -513,7 +498,7 @@ def create_courses_callbacks(dash_app):
                                                                                               semester, year, sem_lock,
                                                                                               date_range)
         if code and len(code) == 8:
-            code = code.upper()
+            code = code.strip().upper()
         else:
             code = None
 
@@ -549,24 +534,26 @@ def create_courses_callbacks(dash_app):
                 # Total Number of Searches
                 html.Div([
                     html.P(f"Unique Courses Searched", style={'margin': '0'}),
-                    html.H3(f"{num_courses}", style={'margin': '0'})],
-                    style={**box_style, **left_box_style}
+                    html.H3(f"{num_courses:,}", className='analytics-summary-value', style={'margin': '0'})],
+                    className='analytics-summary-card', style={**box_style, **left_box_style}
                 ),
                 # Top Search Query
                 html.Div([
                     html.P(f"Median Searches Per Course", style={'margin': '0'}),
-                    html.H3(f"{median_num_searches}", style={'margin': '0'})],
-                    style={**box_style, **middle_box_style}
+                    html.H3(f"{median_num_searches}", className='analytics-summary-value', style={'margin': '0'})],
+                    className='analytics-summary-card', style={**box_style, **middle_box_style}
                 ),
                 # Average Per Day
                 html.Div([
                     html.P(f"Searches for Top 50 Courses", style={'margin': '0'}),
-                    html.H3(f"{top_50_share*100:.2f}%", style={'margin': '0'})],
-                    style={**box_style, **right_box_style}
+                    html.H3(f"{top_50_share*100:.2f}%", className='analytics-summary-value', style={'margin': '0'})],
+                    className='analytics-summary-card', style={**box_style, **right_box_style}
                 )
-            ], style={'display': 'flex'}),  # Display as a row using flexbox
+            ], className='analytics-summary-grid'),  # Display as a row using flexbox
             dcc.Graph(
                 id='course-chart',
+                className='analytics-chart',
+                responsive=True,
                 figure=fig2,
                 config=config
             )
@@ -597,17 +584,17 @@ def create_hourly_callbacks(dash_app):
         Output('hourly-date-picker-range', 'start_date')
         ],
         [
-        Input('hourly-close-date', 'n_clicks'),
-        Input('hourly-close-semester', 'n_clicks'),
         Input('hourly-date-range-radio', 'value'),
+        Input('hourly-date-picker-range', 'start_date'),
+        Input('hourly-date-picker-range', 'end_date'),
+        Input('hourly-semester-select', 'value'),
+        Input('hourly-semester-switch', 'value'),
         ],
-        [
-        State('hourly-date-picker-range', 'start_date'),
-        State('hourly-date-picker-range', 'end_date'),
-        State('hourly-semester-select', 'value'),
-        State('hourly-semester-switch','value')],
     )
-    def update_hourly_output(date_clicks, semester_clicks, date_range, start_date, end_date, sem_text, sem_lock):
+    def update_hourly_output(date_range, start_date, end_date, sem_text, sem_lock):
+        if not start_date or not end_date:
+            raise PreventUpdate
+
         config={
             'displayModeBar': False,
             'displaylogo': False,                                       
@@ -630,6 +617,8 @@ def create_hourly_callbacks(dash_app):
         content = html.Div([
             dcc.Graph(
                 id='hourly-chart',
+                className='analytics-chart',
+                responsive=True,
                 figure=fig,
                 config=config
             )
@@ -651,69 +640,13 @@ def create_hourly_callbacks(dash_app):
         return content, *filter_content, new_start_date
     
 def create_general_callbacks(dash_app, page):
-        @dash_app.callback(
-            Output(f"{page}modal", "is_open"),
-            [Input(f"{page}date-btn", "n_clicks"), 
-            Input(f"{page}close-date", "n_clicks")],
-            [State(f"{page}modal", "is_open")],
-        )
-        def toggle_date_modal(n1, n2, is_open):
-            if n1 or n2:
-                return not is_open
-            return is_open
-        
-        if page != "hourly-":
-            @dash_app.callback(
-                Output(f"{page}modal-course", "is_open"),
-                [Input(f"{page}course-btn", "n_clicks"), 
-                Input(f"{page}close-course", "n_clicks")],
-                [State(f"{page}modal-course", "is_open")],
-            )
-            def toggle_course_modal(n1, n2, is_open):
-                if n1 or n2:
-                    return not is_open
-                return is_open
+    @dash_app.callback(
+        Output(f'{page}date-btn', 'disabled'),
+        Input(f'{page}semester-switch', 'value'),
+    )
+    def disable_date_filter(semester_lock):
+        return bool(semester_lock)
 
-        if page == "home-":
-            @dash_app.callback(
-                Output(f"{page}modal-aggregate", "is_open"),
-                [Input(f"{page}aggregate-btn", "n_clicks"), 
-                Input(f"{page}close-aggregate", "n_clicks")],
-                [State(f"{page}modal-aggregate", "is_open")],
-            )
-            def toggle_aggregate_modal(n1, n2, is_open):
-                if n1 or n2:
-                    return not is_open
-                return is_open
-
-        @dash_app.callback(
-            Output(f"{page}modal-semester", "is_open"),
-            [Input(f"{page}semester-btn", "n_clicks"), 
-            Input(f"{page}close-semester", "n_clicks")],
-            [State(f"{page}modal-semester", "is_open")],
-        )
-        def toggle_semester_modal(n1, n2, is_open):
-            if n1 or n2:
-                return not is_open
-            return is_open
-
-        @dash_app.callback(
-            Output(f'{page}close-course', 'n_clicks'),
-            Input(f'{page}search-input', 'n_submit')
-        )
-        def press_enter_to_click(n_submit):
-            return n_submit
-
-        @dash_app.callback(
-            Output(f'{page}date-btn', 'disabled'),
-            [Input(f'{page}semester-switch','value'),
-            Input(f'{page}date-range-radio', 'value')]
-        )
-        def disable_semester(semester_lock, date_selection):
-            if semester_lock:
-                return True
-            return False
-         
 
 def create_dash_app(server):
     dash_app = Dash(__name__, server=server, url_base_pathname='/dash/', suppress_callback_exceptions=False,
@@ -724,6 +657,9 @@ def create_dash_app(server):
                     meta_tags=[
                         {"name": "viewport", "content": "width=device-width, initial-scale=1"}
                     ])
+    dash_app.index_string = dash_app.index_string.replace(
+        "<html>", '<html data-bs-theme="dark">'
+    )
 
     create_home_callbacks(dash_app)
     create_courses_callbacks(dash_app)
